@@ -1,0 +1,35 @@
+body {
+    margin: 0px;
+}
+
+nav {
+    background-color: rgb(91, 91, 197);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+
+nav-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.activity {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.info > p {
+    margin: 0px 5px;
+}

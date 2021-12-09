@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Workout Companion{% endblock %}
+{% block content %}
+    <h1>Workout Companion Home Page</h1>
+    {% if g.user %}
+        <a href="{{url_for('new_workout')}}" class="affirm">Start New Workout!</a>
+    {% else %}
+        <p>Log in to start a workout</p>
+    {% endif %}
+{% endblock %}

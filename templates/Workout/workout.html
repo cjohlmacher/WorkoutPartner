@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %} Workout {% endblock %}
+
+{% block content %}
+    <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.id}} by {{workout.creator}}</h2>
+    <script src="https://unpkg.com/axios/dist/axios.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='workout.js') }}"></script>
+{% endblock %}

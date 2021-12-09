@@ -1,0 +1,5 @@
+successful_login_message = "Login successful!"
+successful_logout_message = "You have logged out successfully"
+redundant_logout_message = "You are already logged out"
+redundant_login_message = "You are already logged in.  To switch accounts, please log out first."
+authentication_failure_message = "Login failed. Check your username and password and try again."
