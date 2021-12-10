@@ -3,8 +3,22 @@
 {% block title %} Workout {% endblock %}
 
 {% block content %}
-    <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.id}} by {{workout.creator}}</h2>
-    <script src="https://unpkg.com/axios/dist/axios.js"></script>
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='workout.js') }}"></script>
+    <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.name}} by {{workout.created_by.username}} - {{workout.datetime}}</h2>
+    {% if workout.creator == g.user.id %}
+      {% if workout.is_private %}
+        <a class="affirm" href="{{ url_for('share_workout', workout_id=workout.id) }}">Share this Workout</a>
+      {% endif %}
+      <script src="https://unpkg.com/axios/dist/axios.js"></script>
+      <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+      <script src="{{ url_for('static', filename='workout.js') }}"></script>
+    {% else %}
+      {% for activity in workout.workout_activities %}
+        <h3>Exercise: {{activity.exercise.name}}</h3>
+        <p>Date: {{activity.datetime}}</h2>
+        <p>Weight: {{activity.weight}}</h2>
+        <p>Reps: {{activity.reps}}</h2>
+        <p>Sets: {{activity.sets}}</h2>
+        <p>Duration: {{activity.duration}}</h2>
+      {% endfor %}
+    {% endif %}
 {% endblock %}

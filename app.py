@@ -51,7 +51,7 @@ def redirect_if_logged_out(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash(unauthorized_access_message, "danger")
             return redirect("/")
         return func(*args,**kwargs)
     return wrapper
@@ -116,6 +116,7 @@ def new_workout():
 def edit_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
     if g.user.id == workout.creator:
+        print(workout)
         return render_template('Workout/workout.html',workout=workout)
     else:
         flash('You do not have permission to edit this workout')
@@ -128,6 +129,9 @@ def get_workout(workout_id):
     all_activities = workout.workout_activities
     serialized_activities = [
         activity.serialize() for activity in all_activities]
+    for serialized_activity in serialized_activities:
+        exercise = Exercise.query.get(int(serialized_activity['exercise']))
+        serialized_activity['exercise'] = exercise.name
     return jsonify(activities=serialized_activities)
 
 # @app.route('/api/activities')
@@ -139,19 +143,62 @@ def get_workout(workout_id):
 
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['POST'])
 def create_activity(workout_id):
-    exercise = int(request.json['exercise'])
+    exercise_name = request.json['exercise']
+    exercise = Exercise.query.filter_by(name=exercise_name).first()
     sets = request.json.get('sets',None) 
     reps = request.json.get('reps',None) 
     weight = request.json.get('weight',None) 
     duration = request.json.get('duration',None) 
-    new_activity = Activity(performed_by=g.user.id,exercise_id=exercise,sets=sets,reps=reps,weight=weight,duration=duration)
+    new_activity = Activity(performed_by=g.user.id,exercise_id=exercise.id,sets=sets,reps=reps,weight=weight,duration=duration)
     db.session.add(new_activity)
     db.session.commit()
     new_relation = Workout_Activity(activity_id=new_activity.id, workout_id=workout_id)
     db.session.add(new_relation)
     db.session.commit()
     serialized_activity = new_activity.serialize()
+    serialized_activity['exercise'] = exercise_name
     response_json = jsonify(activity=serialized_activity)
     return (response_json,201)
 
+@app.route('/workouts')
+def show_all_workouts():
+    recent_workouts = (Workout.query
+                    .order_by(Workout.datetime.desc())
+                    .filter_by(is_private=False)
+                    .limit(100)
+                    .all())
+    return render_template('Workout/workouts.html',workouts=recent_workouts)
 
+@app.route('/workouts/<int:workout_id>')
+@redirect_if_logged_out
+def show_workout(workout_id):
+    workout = Workout.query.get_or_404(workout_id)
+    if workout.is_private:
+        flash(unauthorized_access_message,'danger')
+        return redirect('/workouts')
+    return render_template('Workout/workout.html',workout=workout)
+
+@app.route('/workouts/<int:workout_id>/share')
+@redirect_if_logged_out
+def share_workout(workout_id):
+    workout = Workout.query.get_or_404(workout_id)
+    cloned_workout = Workout(creator=workout.creator, name=workout.name, is_private=False, is_logged=False)
+    db.session.add(cloned_workout)
+    db.session.commit()
+    for activity in workout.workout_activities:
+        cloned_activity=Activity(performed_by=activity.performed_by,
+                            exercise_id=activity.exercise_id,
+                            weight=activity.weight,
+                            weight_units=activity.weight_units,
+                            reps=activity.reps,
+                            sets=activity.sets,
+                            duration=activity.duration,
+                            duration_units=activity.duration_units,
+                            distance=activity.distance,
+                            distance_units=activity.distance_units)
+        db.session.add(cloned_activity)
+        db.session.commit()
+        workout_relationship = Workout_Activity(workout_id=cloned_workout.id,activity_id=cloned_activity.id)
+        db.session.add(workout_relationship)
+        db.session.commit()
+    return redirect(f"/workouts/{cloned_workout.id}/edit")

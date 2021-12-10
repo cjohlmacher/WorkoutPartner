@@ -63,7 +63,7 @@ class Exercise(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
-    activities = db.relationship('Activity', backref='exercises')
+    activities = db.relationship('Activity', backref='exercise')
 
 class Activity(db.Model):
 
@@ -97,11 +97,16 @@ class Workout(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     creator = db.Column(db.Integer, db.ForeignKey('users.id'))
+    name = db.Column(db.Text, default="Workout")
+    datetime = db.Column(db.DateTime, default=datetime.utcnow())
     is_private = db.Column(db.Boolean, default=True)
     is_logged = db.Column(db.Boolean, default=True)
 
     workout_activities = db.relationship('Activity', secondary='workout_activities', backref='workouts')
-    # exercises = db.relationship('Exercise', secondary='workout_activities', primaryjoin='Activity.id = Workout_Activity.activity_id=', secondaryjoin='Activity.exercise_id=Exercise.id')
+    # exercises = db.relationship('Exercise', secondary='workout_activities', primaryjoin=(Activity.id == Workout_Activity.activity_id), secondaryjoin=(Activity.exercise_id==Exercise.id))
+
+    def __repr__(self):
+        return f"<Workout {self.id}: {self.name} by {self.creator} Private: {self.is_private} Logged: {self.is_logged}>"
 
 class Workout_Activity(db.Model):
 
