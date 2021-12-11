@@ -89,11 +89,11 @@ class Activity {
     generateHTML() {
         const activityDiv = $('<div class="activity"></div>');
         const infoDiv = $('<div class="info"></div>');
-        const exerciseText = $(`<p class="stat">Exercise: ${this.exercise}</p>`);
-        const setsText = $(`<p class="stat">Sets: ${this.sets}</p>`);
-        const repsText = $(`<p class="stat">Reps: ${this.reps}</p>`);
-        const weightText = $(`<p class="stat">Weight: ${this.weight}</p>`);
-        const durationText = $(`<p class="stat">Duration: ${this.duration}</p>`);
+        const exerciseText = this.createStatElement('Exercise',this.exercise,true);
+        const setsText = this.createStatElement('Sets',this.sets);
+        const repsText = this.createStatElement('Reps',this.reps);
+        const weightText = this.createStatElement('Weight',this.weight);
+        const durationText = this.createStatElement('Duration',this.duration);
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
         infoDiv.append(repsText);
@@ -101,6 +101,21 @@ class Activity {
         infoDiv.append(durationText);
         activityDiv.append(infoDiv);
         return activityDiv
+    }
+    createStatElement(label,value,is_dropdown=false) {
+        if (is_dropdown) {
+            return $(
+                `<div class="stat">
+                    <input id="${label}" value="${value}" class="stat-value dropdown" />
+                    <label class="stat-label" for="${label}">${label}</label>
+                </div>`)
+        } else {
+            return $(
+                `<div class="stat">
+                    <input id="${label}" value="${value}" class="stat-value" />
+                    <label class="stat-label" for="${label}">${label}</label>
+                </div>`)
+        };
     }
 };
 
