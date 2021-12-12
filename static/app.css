@@ -24,6 +24,13 @@ nav-section {
     align-items: center;
 }
 
+.activity.new {
+    background-color: rgb(36, 133, 212);
+    border-radius: 2px;
+    margin: 2px 0px;
+    padding: 5px 0px;
+}
+
 .info {
     display: flex;
     flex-direction: row;

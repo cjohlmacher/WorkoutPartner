@@ -42,20 +42,20 @@ class ActivityForm {
         this.$form = this.generateForm();
     }
     generateForm() {
-        const $form = $('<form></form>');
-        const exerciseInput = this.createInput("Exercise:","exercise","text","form-element");
-        const setsInput = this.createInput("Sets:","sets","number","form-element");
-        const repsInput = this.createInput("Reps:","reps","number","form-element");
-        const weightInput = this.createInput("Weight","weight","number","form-element")
-        const durationInput = this.createInput("Duration:", "duration","number","form-element");
+        const $form = $('<form class="activity new"></form>');
+        const exerciseText = createStatElement('Exercise',"",["Bench Press","Running","Deadlift"]);
+        const setsText = createStatElement('Sets',"");
+        const repsText = createStatElement('Reps',"");
+        const weightText = createStatElement('Weight',"");
+        const durationText = createStatElement('Duration',"");
         const submitButton = $('<button></button>')
         submitButton.text("Submit");
         submitButton.on("click",handleSubmit);
-        $form.append(exerciseInput);
-        $form.append(setsInput);
-        $form.append(repsInput);
-        $form.append(weightInput);
-        $form.append(durationInput);
+        $form.append(exerciseText);
+        $form.append(setsText);
+        $form.append(repsText);
+        $form.append(weightText);
+        $form.append(durationText);
         $form.append(submitButton);
         return $form
     }
@@ -89,11 +89,11 @@ class Activity {
     generateHTML() {
         const activityDiv = $('<div class="activity"></div>');
         const infoDiv = $('<div class="info"></div>');
-        const exerciseText = this.createStatElement('Exercise',this.exercise,true);
-        const setsText = this.createStatElement('Sets',this.sets);
-        const repsText = this.createStatElement('Reps',this.reps);
-        const weightText = this.createStatElement('Weight',this.weight);
-        const durationText = this.createStatElement('Duration',this.duration);
+        const exerciseText = createStatElement('Exercise',this.exercise,["Bench Press","Running","Deadlift"]);
+        const setsText = createStatElement('Sets',this.sets);
+        const repsText = createStatElement('Reps',this.reps);
+        const weightText = createStatElement('Weight',this.weight);
+        const durationText = createStatElement('Duration',this.duration);
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
         infoDiv.append(repsText);
@@ -102,24 +102,36 @@ class Activity {
         activityDiv.append(infoDiv);
         return activityDiv
     }
-    createStatElement(label,value,is_dropdown=false) {
-        if (is_dropdown) {
-            return $(
-                `<div class="stat">
-                    <input id="${label}" value="${value}" class="stat-value dropdown" />
-                    <label class="stat-label" for="${label}">${label}</label>
-                </div>`)
-        } else {
-            return $(
-                `<div class="stat">
-                    <input id="${label}" value="${value}" class="stat-value" />
-                    <label class="stat-label" for="${label}">${label}</label>
-                </div>`)
-        };
-    }
 };
 
-app = new App();
+const createStatElement = (label,value,optionsList=null) => {
+    if (optionsList != null) {
+        options = ``;
+        for (option of optionsList) {
+            if (option == value) {
+                options = options.concat(`\n<option value="${option}" selected="selected">${option}</option>`)
+            } else {
+                options = options.concat(`\n<option value="${option}">${option}</option>`)
+            };
+        };
+        //Redo as reduce
+        return $(
+            `<div class="stat">
+                <select id="exercise" name="exercise">
+                    ${options}
+                </select>
+                <label class="stat-label" for="${label}">${label}</label>
+            </div>`)
+    } else {
+        return $(
+            `<div class="stat">
+                <input type="number" id="${label}" value="${value}" name="${label.toLowerCase()}" class="stat-value" />
+                <label class="stat-label" for="${label}">${label}</label>
+            </div>`)
+    };
+};
+
+const app = new App();
 app.workout.fetchAllActivities();
 
 async function handleSubmit(e) {
@@ -127,9 +139,9 @@ async function handleSubmit(e) {
     const $form = $('form');
     const inputs = $form.serializeArray();
     const json_request = {};
-    for (input of inputs) {
+    for (let input of inputs) {
         json_request[input.name] = input.value;
-    }
+    };
     const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/activities`,json_request);
     const {id,exercise,sets,reps,weight,duration} = response['data']['activity']
     const newActivity = new Activity(id,exercise,sets,reps,weight,duration);
