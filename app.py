@@ -149,7 +149,8 @@ def create_activity(workout_id):
     reps = request.json.get('reps',None) 
     weight = request.json.get('weight',None) 
     duration = request.json.get('duration',None) 
-    new_activity = Activity(performed_by=g.user.id,exercise_id=exercise.id,sets=sets,reps=reps,weight=weight,duration=duration)
+    distance = request.json.get('distance',None)
+    new_activity = Activity(performed_by=g.user.id,exercise_id=exercise.id,sets=sets,reps=reps,weight=weight,duration=duration,distance=distance)
     db.session.add(new_activity)
     db.session.commit()
     new_relation = Workout_Activity(activity_id=new_activity.id, workout_id=workout_id)
@@ -159,6 +160,15 @@ def create_activity(workout_id):
     serialized_activity['exercise'] = exercise_name
     response_json = jsonify(activity=serialized_activity)
     return (response_json,201)
+
+@app.route('/api/exercises')
+def get_exercises():
+    exercises = Exercise.query.all()
+    serialized_exercises = [
+        exercise.serialize() for exercise in exercises
+    ]
+    print(serialized_exercises)
+    return jsonify(exercises=serialized_exercises)
 
 @app.route('/workouts')
 def show_all_workouts():

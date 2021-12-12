@@ -1,9 +1,6 @@
 class App {
     constructor() {
         this.workout = new Workout();
-        this.form = new ActivityForm();
-        $('main').prepend(this.form.$form);
-        $('main').prepend(this.workout.$workout);
     }
 }
 
@@ -12,22 +9,30 @@ class Workout {
         this.activities = [];
         this.id = $("#workout-identifier").data('workoutid')
         this.$workout = $('<div class="workout"></div>');
+        this.exerciseLookup = {};
     }
     renderWorkout() {
         this.$workout.empty();
+        this.form = new ActivityForm();
+        $('main').prepend(this.form.$form);
         for (let activity of this.activities) {
             const activityHTML = activity.generateHTML();
             this.$workout.append(activityHTML);
         }
+        $('main').prepend(this.$workout);
     }
-    async fetchAllActivities() {
-        const resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
-        const activities = resp['data'][`activities`];
-        console.log(activities);
+    async fetchAllData() {
+        const exercise_resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
+        const allExercises = exercise_resp['data']['exercises'];
+        for (let exercise of allExercises) {
+            this.exerciseLookup[exercise['name']] = exercise['category'];
+        };
+        const activity_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
+        const activities = activity_resp['data'][`activities`];
         for (const activity of activities) {
-            const newActivity = new Activity(activity.id,activity.exercise,activity.sets,activity.reps,activity.weight,activity.duration);
+            const newActivity = new Activity(activity.id,activity.exercise,activity.sets,activity.reps,activity.weight,activity.duration,activity.distance);
             this.activities.push(newActivity);
-        }
+        };
         this.renderWorkout();
     }
     addToWorkout(activity) {
@@ -43,11 +48,14 @@ class ActivityForm {
     }
     generateForm() {
         const $form = $('<form class="activity new"></form>');
-        const exerciseText = createStatElement('Exercise',"",["Bench Press","Running","Deadlift"]);
+        const exerciseList = Object.keys(app.workout.exerciseLookup);
+        exerciseList.sort();
+        const exerciseText = createStatElement('Exercise',"",exerciseList);
         const setsText = createStatElement('Sets',"");
         const repsText = createStatElement('Reps',"");
         const weightText = createStatElement('Weight',"");
         const durationText = createStatElement('Duration',"");
+        const distanceText = createStatElement('Distance',"");
         const submitButton = $('<button></button>')
         submitButton.text("Submit");
         submitButton.on("click",handleSubmit);
@@ -56,6 +64,7 @@ class ActivityForm {
         $form.append(repsText);
         $form.append(weightText);
         $form.append(durationText);
+        $form.append(distanceText);
         $form.append(submitButton);
         return $form
     }
@@ -77,7 +86,7 @@ class ActivityForm {
 };
 
 class Activity {
-    constructor(id,exercise,sets,reps,weight,duration) {
+    constructor(id,exercise,sets,reps,weight,duration,distance) {
         this.id = id;
         //this.exercise = exercise.charAt(0).toUpperCase()+exercise.slice(1);
         this.exercise = exercise;
@@ -85,20 +94,25 @@ class Activity {
         this.reps = reps;
         this.weight = weight;
         this.duration = duration;
+        this.distance = distance;
     }
     generateHTML() {
         const activityDiv = $('<div class="activity"></div>');
         const infoDiv = $('<div class="info"></div>');
-        const exerciseText = createStatElement('Exercise',this.exercise,["Bench Press","Running","Deadlift"]);
+        const exerciseList = Object.keys(app.workout.exerciseLookup);
+        exerciseList.sort();
+        const exerciseText = createStatElement('Exercise',this.exercise,exerciseList);
         const setsText = createStatElement('Sets',this.sets);
         const repsText = createStatElement('Reps',this.reps);
         const weightText = createStatElement('Weight',this.weight);
         const durationText = createStatElement('Duration',this.duration);
+        const distanceText = createStatElement('Distance',this.distance);
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
         infoDiv.append(repsText);
         infoDiv.append(weightText);
         infoDiv.append(durationText);
+        infoDiv.append(distanceText);
         activityDiv.append(infoDiv);
         return activityDiv
     }
@@ -132,7 +146,7 @@ const createStatElement = (label,value,optionsList=null) => {
 };
 
 const app = new App();
-app.workout.fetchAllActivities();
+app.workout.fetchAllData();
 
 async function handleSubmit(e) {
     e.preventDefault();
@@ -143,8 +157,8 @@ async function handleSubmit(e) {
         json_request[input.name] = input.value;
     };
     const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/activities`,json_request);
-    const {id,exercise,sets,reps,weight,duration} = response['data']['activity']
-    const newActivity = new Activity(id,exercise,sets,reps,weight,duration);
+    const {id,exercise,sets,reps,weight,duration,distance} = response['data']['activity']
+    const newActivity = new Activity(id,exercise,sets,reps,weight,duration,distance);
     app.workout.addToWorkout(newActivity);
     $form[0].reset()
 }

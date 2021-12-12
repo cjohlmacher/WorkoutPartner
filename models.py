@@ -62,8 +62,15 @@ class Exercise(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
+    type = db.Column(db.String, nullable=False)
 
     activities = db.relationship('Activity', backref='exercise')
+
+    def __repr__(self):
+        return f"<Exercise {self.id}: {self.name} {self.type}>"
+    
+    def serialize(self):
+        return {'name': self.name, 'type': self.type}
 
 class Activity(db.Model):
 
@@ -88,7 +95,8 @@ class Activity(db.Model):
             'sets': self.sets, 
             'reps': self.reps, 
             'weight': self.weight,
-            'duration': self.duration
+            'duration': self.duration,
+            'distance': self.distance
             }
 
 class Workout(db.Model):

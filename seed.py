@@ -15,14 +15,16 @@ user_3 = User(username="cakecomrade52",email="cakecomrade52@gmail.com",password=
 
 batch_insert([user_1,user_2,user_3])
 
-exercise_1 = Exercise(name="Bench Press")
-exercise_2 = Exercise(name="Running")
-exercise_3 = Exercise(name="Cycling")
-exercise_4 = Exercise(name="Squats")
-exercise_5 = Exercise(name="Deadlift")
-exercise_6 = Exercise(name="Leg Raises")
+exercise_1 = Exercise(name="Bench Press",type="Strength")
+exercise_2 = Exercise(name="Running",type="Cardio")
+exercise_3 = Exercise(name="Cycling",type="Cardio")
+exercise_4 = Exercise(name="Squats",type="Strength")
+exercise_5 = Exercise(name="Deadlift",type="Strength")
+exercise_6 = Exercise(name="Leg Raises",type="Endurance")
+exercise_7 = Exercise(name="Seated Rows",type="Strength")
+exercise_8 = Exercise(name="Plank",type="Endurance")
 
-batch_insert([exercise_1, exercise_2, exercise_3, exercise_4,exercise_5,exercise_6])
+batch_insert([exercise_1, exercise_2, exercise_3, exercise_4,exercise_5,exercise_6,exercise_7,exercise_8])
 
 activity_1 = Activity(performed_by=1,exercise_id=1,weight=20,weight_units="lbs",reps=6,sets=4)
 activity_2 = Activity(performed_by=2,exercise_id=3,duration=40,duration_units="mins",distance=2,distance_units="miles")
