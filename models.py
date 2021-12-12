@@ -97,7 +97,7 @@ class Activity(db.Model):
             'weight': self.weight,
             'duration': self.duration,
             'distance': self.distance
-            }
+        }
 
 class Workout(db.Model):
 
@@ -115,6 +115,9 @@ class Workout(db.Model):
 
     def __repr__(self):
         return f"<Workout {self.id}: {self.name} by {self.creator} Private: {self.is_private} Logged: {self.is_logged}>"
+    
+    def display_date(self):
+        return f"{self.datetime.month}-{self.datetime.day}-{self.datetime.year}"
 
 class Workout_Activity(db.Model):
 

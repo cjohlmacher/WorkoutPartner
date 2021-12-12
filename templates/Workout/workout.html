@@ -3,7 +3,7 @@
 {% block title %} Workout {% endblock %}
 
 {% block content %}
-    <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.name}} by {{workout.created_by.username}} - {{workout.datetime}}</h2>
+    <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.name}} by {{workout.created_by.username}} - {{workout.display_date()}}</h2>
     {% if workout.creator == g.user.id %}
       {% if workout.is_private %}
         <a class="affirm" href="{{ url_for('share_workout', workout_id=workout.id) }}">Share this Workout</a>
@@ -12,13 +12,36 @@
       <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
       <script src="{{ url_for('static', filename='workout.js') }}"></script>
     {% else %}
-      {% for activity in workout.workout_activities %}
-        <h3>Exercise: {{activity.exercise.name}}</h3>
-        <p>Date: {{activity.datetime}}</h2>
-        <p>Weight: {{activity.weight}}</h2>
-        <p>Reps: {{activity.reps}}</h2>
-        <p>Sets: {{activity.sets}}</h2>
-        <p>Duration: {{activity.duration}}</h2>
+    <div class="workout"></div>
+    {% for activity in workout.workout_activities %}
+      <div class="activity">
+        <div class="info">
+          <div class="stat visitor">
+            <p class="stat-value dropdown">{{activity.exercise.name}}</p>
+            <label class="stat-label" for="exercise">Exercise</label>
+          </div>
+          <div class="stat visitor">
+            <p class="stat-value">{{activity.weight}}</p>
+            <label class="stat-label" for="exercise">Weight</label>
+          </div>
+          <div class="stat visitor">
+            <p class="stat-value">{{activity.reps}}</p>
+            <label class="stat-label" for="exercise">Reps</label>
+          </div>
+          <div class="stat visitor">
+            <p class="stat-value">{{activity.sets}}</p>
+            <label class="stat-label" for="exercise">Sets</label>
+          </div>
+          <div class="stat visitor">
+            <p class="stat-value">{{activity.duration}}</p>
+            <label class="stat-label" for="exercise">Duration</label>
+          </div>
+          <div class="stat visitor">
+            <p class="stat-value">{{activity.distance}}</p>
+            <label class="stat-label" for="exercise">Distance</label>
+          </div>
+        </div>
+      </div>
       {% endfor %}
     {% endif %}
 {% endblock %}

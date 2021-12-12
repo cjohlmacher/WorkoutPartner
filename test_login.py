@@ -50,11 +50,11 @@ class LoginViewTestCase(TestCase):
         db.session.commit()
         
         #Seed Initial Exercises
-        exercise_1 = Exercise(name="Test Exercise 1")
-        exercise_2 = Exercise(name="Test Exercise 2")
-        exercise_3 = Exercise(name="Test Exercise 3")
-        exercise_4 = Exercise(name="Test Exercise 4")
-        exercise_5 = Exercise(name="Test Exercise 5")
+        exercise_1 = Exercise(name="Test Exercise 1",type="Strength")
+        exercise_2 = Exercise(name="Test Exercise 2",type="Cardio")
+        exercise_3 = Exercise(name="Test Exercise 3",type="Endurance")
+        exercise_4 = Exercise(name="Test Exercise 4",type="Cardio")
+        exercise_5 = Exercise(name="Test Exercise 5",type="Strength")
         for exercise in [exercise_1, exercise_2, exercise_3, exercise_4, exercise_5]:
             db.session.add(exercise)
         db.session.commit()
