@@ -18,15 +18,44 @@ nav-section {
     justify-content: flex-start;
 }
 
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .cover-photo {
     width: 100vw;
+}
+
+#workout-identifier {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-inline-end: 0px;
+    margin-inline-start: 0px;
+}
+
+.workout {
+    display: flex;
+    flex-direction: column;
+    width: 50vw;
+}
+
+.workout-info {
+    margin: 0px;
+}
+
+.exercise-info {
+    min-width: 50vw;
 }
 
 .activity {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     margin: 5px 0px;
 }
 
@@ -45,6 +74,13 @@ nav-section {
 
 .info > p {
     margin: 0px 5px;
+}
+
+h2 > .seamless {
+    font-size: 1.5em;
+    border: none;
+    text-align: center;
+    font-weight: bold;
 }
 
 .stat {

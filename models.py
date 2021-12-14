@@ -70,7 +70,7 @@ class Exercise(db.Model):
         return f"<Exercise {self.id}: {self.name} {self.type}>"
     
     def serialize(self):
-        return {'name': self.name, 'type': self.type}
+        return {'id': self.id, 'name': self.name, 'type': self.type}
 
 class Activity(db.Model):
 
@@ -99,6 +99,9 @@ class Activity(db.Model):
             'distance': self.distance
         }
 
+    def __repr__(self):
+        return f"<Activity {self.id} Exercise: {self.exercise_id} Sets: {self.sets} Reps: {self.reps} Weight: {self.weight} Duration: {self.duration} Distance: {self.distance}>"
+
 class Workout(db.Model):
 
     __tablename__ = 'workouts'
@@ -118,6 +121,18 @@ class Workout(db.Model):
     
     def display_date(self):
         return f"{self.datetime.month}-{self.datetime.day}-{self.datetime.year}"
+
+    def serialize(self):
+        return {'id': self.id, 
+            'name': self.name, 
+            }
+    
+    def get_unique_exercises(self):
+        unique_exercises = set()
+        for activity in self.workout_activities:
+            unique_exercises.add(activity.exercise.name)
+        return list(unique_exercises)
+
 
 class Workout_Activity(db.Model):
 

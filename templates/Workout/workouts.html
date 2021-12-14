@@ -5,8 +5,8 @@
 {% block content %}
     {% for workout in workouts %}
         <h3>{{workout.name}} by {{workout.created_by.username}}</h3>
-        {% for activity in workout.workout_activities %}
-            {{activity.exercise.name}}
+        {% for exercise_name in workout.get_unique_exercises() %}
+            {{exercise_name}}
         {% endfor %}
         <a href="{{url_for('show_workout', workout_id=workout.id)}}">View Workout</a>
     {% endfor %}

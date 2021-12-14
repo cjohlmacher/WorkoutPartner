@@ -10,22 +10,45 @@ class Workout {
         this.id = $("#workout-identifier").data('workoutid')
         this.$workout = $('<div class="workout"></div>');
         this.exerciseLookup = {};
+        this.name = $("#workout-identifier input").val();
     }
     renderWorkout() {
         this.$workout.empty();
         this.form = new ActivityForm();
-        $('main').prepend(this.form.$form);
         for (let activity of this.activities) {
             const activityHTML = activity.generateHTML();
             this.$workout.append(activityHTML);
+        };
+        $('main').append(this.$workout);
+        $('main').append(this.form.$form);
+        $('main').append($('<div class="exercise-info"></div>'));
+        for (let activity of this.activities) {
+            activity.filterStats()
         }
-        $('main').prepend(this.$workout);
+        $('.activity.logged input.stat-value').each(function() {
+            $(this).on('change',handleChange)
+        });
+        $('.activity.logged select').each(function() {
+            $(this).on('change',handleChange)
+        });
+        $("#workout-identifier input").on('change',this.updateWorkoutName)
+    }
+    async getExerciseDetails(e) {
+        e.preventDefault();
+        const resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
+        
+    }
+    async updateWorkoutName(e) {
+        e.preventDefault();
+        const json_request = {};
+        json_request['name'] = e.target.value;
+        const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/edit`,json_request);
     }
     async fetchAllData() {
         const exercise_resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
         const allExercises = exercise_resp['data']['exercises'];
         for (let exercise of allExercises) {
-            this.exerciseLookup[exercise['name']] = exercise['category'];
+            this.exerciseLookup[exercise['name']] = exercise['type'];
         };
         const activity_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
         const activities = activity_resp['data'][`activities`];
@@ -96,9 +119,51 @@ class Activity {
         this.duration = duration;
         this.distance = distance;
     }
+    filterStats() {
+        const exerciseCategory = app.workout.exerciseLookup[this.exercise];
+        if (exerciseCategory == 'Strength') {
+            $(`div[data-id='${this.id}'] input[name='sets']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='reps']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='weight']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='duration']`).parent().hide()
+            $(`div[data-='${this.id}'] input[name='distance']`).parent().hide()
+        } else if (exerciseCategory == 'Cardio') {
+            $(`div[data-id='${this.id}'] input[name='sets']`).parent().hide()
+            $(`div[data-id='${this.id}'] input[name='reps']`).parent().hide()
+            $(`div[data-id='${this.id}'] input[name='weight']`).parent().hide()
+            $(`div[data-id='${this.id}'] input[name='duration']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='distance']`).parent().show()
+        } else if (exerciseCategory == 'Endurance') {
+            $(`div[data-id='${this.id}'] input[name='sets']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='reps']`).parent().hide()
+            $(`div[data-id='${this.id}'] input[name='weight']`).parent().hide()
+            $(`div[data-id='${this.id}'] input[name='duration']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide()
+        } else {
+            $(`div[data-id='${this.id}'] input[name='sets']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='reps']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='weight']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='duration']`).parent().show()
+            $(`div[data-id='${this.id}'] input[name='distance']`).parent().show()
+        }
+    }
+    async requestInfo(e) {
+        e.preventDefault();
+        const activityId = e.target.parentElement.dataset.id;
+        const exerciseName = $(`div[data-id=${activityId}] select option:selected`).val();
+        const resp = await axios.get(`http://127.0.0.1:5000/api/exercises/${exerciseName}`)
+        const exerciseId = resp.data.exercise.id;
+        const apiResponse = await axios.get(`https://wger.de/api/v2/exerciseinfo/${exerciseId}`);
+        console.log(apiResponse);
+        const exerciseDescription = apiResponse.data.description;
+        const exerciseMuscles = apiResponse.data.muscles;
+        const exerciseEquipment = apiResponse.data.equipment;
+        $(".exercise-info").empty();
+        generateExerciseHTML(exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment);
+    }
     generateHTML() {
-        const activityDiv = $('<div class="activity"></div>');
-        const infoDiv = $('<div class="info"></div>');
+        const activityDiv = $('<div class="activity logged"></div>');
+        const infoDiv = $(`<div class="info" data-id="${this.id}"></div>`);
         const exerciseList = Object.keys(app.workout.exerciseLookup);
         exerciseList.sort();
         const exerciseText = createStatElement('Exercise',this.exercise,exerciseList);
@@ -107,13 +172,46 @@ class Activity {
         const weightText = createStatElement('Weight',this.weight);
         const durationText = createStatElement('Duration',this.duration);
         const distanceText = createStatElement('Distance',this.distance);
+        const infoButton = $("<button>i</button>");
+        infoButton.on('click',this.requestInfo);
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
         infoDiv.append(repsText);
         infoDiv.append(weightText);
         infoDiv.append(durationText);
         infoDiv.append(distanceText);
+        infoDiv.append(infoButton);
         activityDiv.append(infoDiv);
+        // console.log($(`div[data-id='${this.id}'] select`));
+        // 
+        exerciseText.on('change',function (e) {
+            const exerciseCategory = app.workout.exerciseLookup[e.target.value];
+            if (exerciseCategory == 'Strength') {
+                setsText.show()
+                repsText.show()
+                weightText.show()
+                durationText.hide()
+                distanceText.hide()
+            } else if (exerciseCategory == 'Cardio') {
+                setsText.hide()
+                repsText.hide()
+                weightText.hide()
+                durationText.show()
+                distanceText.show()
+            } else if (exerciseCategory == 'Endurance') {
+                setsText.show()
+                repsText.hide()
+                weightText.hide()
+                durationText.show()
+                distanceText.hide()
+            } else {
+                setsText.show()
+                repsText.show()
+                weightText.show()
+                durationText.show()
+                distanceText.show()
+            }
+        })
         return activityDiv
     }
 };
@@ -145,6 +243,30 @@ const createStatElement = (label,value,optionsList=null) => {
     };
 };
 
+const generateExerciseHTML = (exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment) => {
+    console.log(exerciseEquipment);
+    const exerciseDiv = $(".exercise-info");
+    const descriptionHTML = $(`${exerciseDescription}`);
+    const musclesHTML = exerciseMuscles.map((muscle) => {
+        return $(`<li>${muscle.name}</li>`);
+    });
+    const equipmentHTML = exerciseEquipment.map((equipment)=>{
+        return $(`<li>${equipment.name}</li>`);
+    });
+    exerciseDiv.append(descriptionHTML);
+    const muscleList = $(`<ul class="muscle-list">Targeted Muscles:</ul>`);
+    for (muscleHTML of musclesHTML) {
+        muscleList.append(muscleHTML);
+    };
+    exerciseDiv.append(muscleList);
+    const equipmentList = $(`<ul class="equipment-list">Equipment:</ul>`);
+    for (eachEquipmentHTML of equipmentHTML) {
+        equipmentList.append(eachEquipmentHTML);
+    };
+    exerciseDiv.append(equipmentList);
+    return exerciseDiv;
+};
+
 const app = new App();
 app.workout.fetchAllData();
 
@@ -162,3 +284,11 @@ async function handleSubmit(e) {
     app.workout.addToWorkout(newActivity);
     $form[0].reset()
 }
+
+async function handleChange(e) {
+    e.preventDefault();
+    const activity_id = e.target.parentElement.parentElement.dataset.id;
+    const json_request = {};
+    json_request[e.target.name] = e.target.value;
+    const response = await axios.post(`http://127.0.0.1:5000/api/activities/${activity_id}/update`,json_request);
+};

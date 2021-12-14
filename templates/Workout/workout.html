@@ -3,7 +3,10 @@
 {% block title %} Workout {% endblock %}
 
 {% block content %}
-    <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.name}} by {{workout.created_by.username}} - {{workout.display_date()}}</h2>
+    <h2 id="workout-identifier" data-workoutid={{workout.id}}>
+      <input type="text" id="workout-name" value="{{workout.name}}" class="seamless" />
+    </h2>
+    <h3 class="workout-info">by {{workout.created_by.username}} - {{workout.display_date()}}</h3>
     {% if workout.creator == g.user.id %}
       {% if workout.is_private %}
         <a class="affirm" href="{{ url_for('share_workout', workout_id=workout.id) }}">Share this Workout</a>

@@ -1,4 +1,5 @@
 import os
+import requests as requests
 
 from flask import Flask, render_template, jsonify, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
@@ -122,6 +123,21 @@ def edit_workout(workout_id):
         flash('You do not have permission to edit this workout')
         return redirect(f'/workouts/{workout_id}')
 
+@app.route('/api/workouts/<int:workout_id>/edit', methods=['POST'])
+def update_workout(workout_id):
+    workout = Workout.query.get_or_404(workout_id)
+    if g.user.id == workout.creator:
+        new_workout_name = request.json['name']
+        workout.name = new_workout_name
+        db.session.add(workout)
+        db.session.commit()
+        serialized_workout = workout.serialize()
+        response_json =  jsonify(workout=serialized_workout)
+        return (response_json,200)
+    else:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+
 # API Routes for workout activities
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['GET'])
 def get_workout(workout_id):
@@ -142,14 +158,15 @@ def get_workout(workout_id):
 #     return jsonify(activities=serialized_activities)
 
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['POST'])
+@redirect_if_logged_out
 def create_activity(workout_id):
     exercise_name = request.json['exercise']
     exercise = Exercise.query.filter_by(name=exercise_name).first()
-    sets = request.json.get('sets',None) 
-    reps = request.json.get('reps',None) 
-    weight = request.json.get('weight',None) 
-    duration = request.json.get('duration',None) 
-    distance = request.json.get('distance',None)
+    sets = request.json.get('sets',None) if request.json.get('sets',None) != "" else None
+    reps = request.json.get('reps',None) if request.json.get('reps',None) != "" else None
+    weight = request.json.get('weight',None) if request.json.get('weight',None) != "" else None
+    duration = request.json.get('duration',None) if request.json.get('duration',None) != "" else None
+    distance = request.json.get('distance',None)if request.json.get('distance',None) != "" else None
     new_activity = Activity(performed_by=g.user.id,exercise_id=exercise.id,sets=sets,reps=reps,weight=weight,duration=duration,distance=distance)
     db.session.add(new_activity)
     db.session.commit()
@@ -160,6 +177,27 @@ def create_activity(workout_id):
     serialized_activity['exercise'] = exercise_name
     response_json = jsonify(activity=serialized_activity)
     return (response_json,201)
+
+@app.route('/api/activities/<int:activity_id>/update', methods=['POST'])
+@redirect_if_logged_out
+def update_activity(activity_id):
+    activity = Activity.query.get_or_404(activity_id)
+    print(activity)
+    for key,value in request.json.items():
+        if key == 'exercise':
+            exercise = Exercise.query.filter_by(name=value).first()
+            setattr(activity,'exercise_id',exercise.id)
+        else:
+            setattr(activity,key,value)
+    db.session.add(activity)
+    db.session.commit()
+    activity = Activity.query.get_or_404(activity_id)
+    print(activity)
+    serialized_activity = activity.serialize()
+    serialized_activity['exercise'] = activity.exercise.name
+    response_json = jsonify(activity=serialized_activity)
+    return (response_json,201)
+
 
 @app.route('/api/exercises')
 def get_exercises():
@@ -178,6 +216,12 @@ def show_all_workouts():
                     .limit(100)
                     .all())
     return render_template('Workout/workouts.html',workouts=recent_workouts)
+
+@app.route('/api/exercises/<exercise_name>')
+def get_exercise_info(exercise_name):
+    exercise = Exercise.query.filter_by(name=exercise_name).first()
+    serialized_exercise = exercise.serialize()
+    return jsonify(exercise=serialized_exercise)
 
 @app.route('/workouts/<int:workout_id>')
 @redirect_if_logged_out
