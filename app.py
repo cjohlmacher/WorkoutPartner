@@ -115,7 +115,7 @@ def logout():
 def view_workouts(user_id):
     user = User.query.get_or_404(user_id)
     if g.user.id == user.id:
-        return render_template('Workout/workouts.html',workouts=user.workouts)
+        return render_template('Workout/workouts.html',workouts=user.workouts.order_by(Workout.datetime.desc()))
     else:
         shared_workouts = []
         for workout in user.workouts:
@@ -226,13 +226,44 @@ def delete_workout(workout_id):
 @app.route('/api/workouts/<int:workout_id>/edit', methods=['POST'])
 def update_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
-    if g.user.id == workout.creator:
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    elif g.user.id == workout.creator:
         new_workout_name = request.json['name']
         workout.name = new_workout_name
         db.session.add(workout)
         db.session.commit()
         serialized_workout = workout.serialize()
         response_json =  jsonify(workout=serialized_workout)
+        return (response_json,200)
+    else:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+
+@app.route('/api/workouts/<int:workout_id>/share', methods=['GET'])
+def toggle_share(workout_id):
+    workout = Workout.query.get_or_404(workout_id)
+    if g.user.id == workout.creator:
+        workout.is_private = not workout.is_private
+        db.session.add(workout)
+        db.session.commit()
+        serialized_workout = workout.serialize()
+        response_json =  jsonify(workout=serialized_workout)  
+        return (response_json,200)
+    else:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+
+@app.route('/api/workouts/<int:workout_id>/log', methods=['GET'])
+def toggle_log(workout_id):
+    workout = Workout.query.get_or_404(workout_id)
+    if g.user.id == workout.creator:
+        workout.is_logged = not workout.is_logged
+        db.session.add(workout)
+        db.session.commit()
+        serialized_workout = workout.serialize()
+        response_json =  jsonify(workout=serialized_workout)  
         return (response_json,200)
     else:
         response_json = {'response': unauthorized_edit_message}

@@ -11,12 +11,24 @@
     {% else %}
       <h2 id="workout-identifier" data-workoutid={{workout.id}}>{{workout.name}}</h2>
     {% endif %}
-    <h3 class="workout-info">by {{workout.created_by.username}} - {{workout.display_date()}}</h3>
-    {% if workout.creator == g.user.id %}
-      {% if workout.is_private %}
-        <a class="affirm" href="{{ url_for('share_workout', workout_id=workout.id) }}">Share this Workout</a>
+    <div class="header">
+      <h3 class="workout-info">by {{workout.created_by.username}} - {{workout.display_date()}}</h3>
+      {% if workout.creator == g.user.id %}
+        <div class="tags">
+          {% if workout.is_private == true %}
+            <button class="tag share inactive">Private</button>
+          {% else %}
+            <button class="tag share">Shared</button>
+          {% endif %}
+          {% if workout.is_logged == true %}
+            <button class="tag logged">Logged</button>
+          {% else %}
+            <button class="tag logged inactive">Untracked</button>
+          {% endif %}
+        </div>
       {% endif %}
-      <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete this Workout</a>
+    </div>
+    {% if workout.creator == g.user.id %}
       <script src="https://unpkg.com/axios/dist/axios.js"></script>
       <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
       <script src="{{ url_for('static', filename='workout.js') }}"></script>
@@ -63,7 +75,12 @@
         </div>
       {% endfor %}
     </div>
-    <a class="button affirm" href="{{url_for('clone_workout',workout_id=workout.id)}}">Use This Workout</a>
     {% endif %}
+    <div class="button-bar">
+      {% if workout.creator == g.user.id %}
+        <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete this Workout</a>
+      {% endif %}
+      <a class="button affirm" href="{{url_for('clone_workout',workout_id=workout.id)}}">Copy This Workout</a>
+    </div>
   </div>
 {% endblock %}

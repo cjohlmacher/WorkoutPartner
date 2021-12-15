@@ -22,7 +22,7 @@ class User(db.Model):
     password = db.Column(db.Text, nullable=False)
 
     activities = db.relationship('Activity', backref='users')
-    workouts = db.relationship('Workout', backref='created_by')
+    workouts = db.relationship('Workout', lazy='dynamic', backref='created_by')
 
     @classmethod
     def signup(cls, username, email, password):

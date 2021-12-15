@@ -8,11 +8,18 @@
             <div class="div-card">
                 <h3>{{workout.name}} by {{workout.created_by.username}}</h3>
                 {% if workout.creator == g.user.id %}
-                    {% if workout.is_private %}
-                        <p class="add-on">(private)</p>
-                    {% else %}
-                        <p class="add-on">(shared)</p>
-                    {% endif %}
+                    <div class="tags row">
+                        {% if workout.is_private == true %}
+                            <button class="tag share inactive">Private</button>
+                        {% else %}
+                            <button class="tag share">Shared</button>
+                        {% endif %}
+                        {% if workout.is_logged == true %}
+                            <button class="tag logged">Logged</button>
+                        {% else %}
+                            <button class="tag logged inactive">Untracked</button>
+                        {% endif %}
+                    </div>
                 {% endif %}
                 <ul>
                     {% for exercise_name in workout.get_unique_exercises() %}

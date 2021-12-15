@@ -146,6 +146,7 @@ class LoginViewTestCase(TestCase):
             resp = c.post("/signup",data={
                 "username":"testuser3",
                 "password":"testpassword3",
+                "confirm_password": "testpassword3",
                 "email": "testuser3@test.com",
                 }, follow_redirects=True)
             html = resp.get_data(as_text=True)

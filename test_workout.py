@@ -174,13 +174,13 @@ class WorkoutViewTestCase(TestCase):
             self.assertIn("1111114",html)
     
     def test_block_view_workout(self):
-        """ Is a logged in user prevented from viewing details of a private workout? """
+        """ Is a logged in user prevented from viewing details of another user's private workout? """
         with self.client as c:
-            testuser1 = User.query.filter_by(username="testuser1").first()
+            testuser2 = User.query.filter_by(username="testuser2").first()
             testworkout3 = Workout.query.filter_by(name="Test Workout 3").first()
 
             with c.session_transaction() as sess:
-                sess[USER_KEY] = testuser1.id
+                sess[USER_KEY] = testuser2.id
 
             resp = c.get(f"/workouts/{testworkout3.id}",follow_redirects=True)
             html = resp.get_data(as_text=True)

@@ -35,6 +35,7 @@ class Workout {
             $(this).on('change',handleChange)
         });
         $("#workout-identifier input").on('change',this.updateWorkoutName)
+        this.addTagEvents();
     }
     async getExerciseDetails(e) {
         e.preventDefault();
@@ -65,6 +66,34 @@ class Workout {
         this.activities.push(activity);
         const activityHTML = activity.generateHTML();
         this.$workout.append(activityHTML);
+    }
+    addTagEvents() {
+        const shareTag = $('button.share');
+        const logTag = $('button.logged');
+        shareTag.on('click', this.toggleShare.bind(this));
+        logTag.on('click', this.toggleLog.bind(this));
+    }
+    async toggleShare(e) {
+        e.preventDefault();
+        const toggle_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/share`);
+        const shareTag = $('button.share');
+        shareTag.toggleClass('inactive');
+        if (shareTag.text() == 'Private') {
+            shareTag.text('Shared');
+        } else {
+            shareTag.text('Private');
+        };
+    }
+    async toggleLog(e) {
+        e.preventDefault();
+        const toggle_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/log`);
+        const logTag = $('button.logged');
+        logTag.toggleClass('inactive');
+        if (logTag.text() == 'Logged') {
+            logTag.text('Untracked');
+        } else {
+            logTag.text('Logged');
+        };
     }
 }
 
