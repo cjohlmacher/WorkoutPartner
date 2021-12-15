@@ -123,32 +123,30 @@ class Activity {
         this.distance = distance;
     }
     filterStats() {
-        const exerciseCategory = app.workout.exerciseLookup[this.exercise];
-        if (exerciseCategory == 'Strength') {
-            $(`div[data-id='${this.id}'] input[name='sets']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='reps']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='weight']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='duration']`).parent().hide()
-            $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide()
-        } else if (exerciseCategory == 'Cardio') {
-            $(`div[data-id='${this.id}'] input[name='sets']`).parent().hide()
-            $(`div[data-id='${this.id}'] input[name='reps']`).parent().hide()
-            $(`div[data-id='${this.id}'] input[name='weight']`).parent().hide()
-            $(`div[data-id='${this.id}'] input[name='duration']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='distance']`).parent().show()
-        } else if (exerciseCategory == 'Endurance') {
-            $(`div[data-id='${this.id}'] input[name='sets']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='reps']`).parent().hide()
-            $(`div[data-id='${this.id}'] input[name='weight']`).parent().hide()
-            $(`div[data-id='${this.id}'] input[name='duration']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide()
-        } else {
-            $(`div[data-id='${this.id}'] input[name='sets']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='reps']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='weight']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='duration']`).parent().show()
-            $(`div[data-id='${this.id}'] input[name='distance']`).parent().show()
-        }
+        if (!this.sets) {
+            $(`div[data-id='${this.id}'] input[name='sets']`).parent().hide();
+        };
+        if (!this.reps) {
+            $(`div[data-id='${this.id}'] input[name='reps']`).parent().hide();
+        };
+        if (!this.weight) {
+            $(`div[data-id='${this.id}'] input[name='weight']`).parent().hide();
+        };
+        if (!this.duration) {
+            $(`div[data-id='${this.id}'] input[name='duration']`).parent().hide();
+        };
+        if (!this.distance) {
+            $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide();
+        };
+    }
+    expandStats(e) {
+        e.preventDefault();
+        const activityId = this.parentElement.dataset.id;
+        $(`div[data-id='${activityId}'] input[name='sets']`).parent().show();
+        $(`div[data-id='${activityId}'] input[name='reps']`).parent().show();
+        $(`div[data-id='${activityId}'] input[name='weight']`).parent().show();
+        $(`div[data-id='${activityId}'] input[name='duration']`).parent().show();
+        $(`div[data-id='${activityId}'] input[name='distance']`).parent().show();
     }
     async requestInfo(e) {
         e.preventDefault();
@@ -175,7 +173,9 @@ class Activity {
         const weightText = createStatElement('Weight',this.weight);
         const durationText = createStatElement('Duration',this.duration);
         const distanceText = createStatElement('Distance',this.distance);
+        const expandButton = $("<button class='get-info'>...</button>");
         const infoButton = $("<button class='get-info'>i</button>");
+        expandButton.on('click',this.expandStats);
         infoButton.on('click',this.requestInfo);
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
@@ -183,36 +183,9 @@ class Activity {
         infoDiv.append(weightText);
         infoDiv.append(durationText);
         infoDiv.append(distanceText);
+        infoDiv.append(expandButton);
         infoDiv.append(infoButton);
         activityDiv.append(infoDiv);
-        exerciseText.on('change',function (e) {
-            const exerciseCategory = app.workout.exerciseLookup[e.target.value];
-            if (exerciseCategory == 'Strength') {
-                setsText.show()
-                repsText.show()
-                weightText.show()
-                durationText.hide()
-                distanceText.hide()
-            } else if (exerciseCategory == 'Cardio') {
-                setsText.hide()
-                repsText.hide()
-                weightText.hide()
-                durationText.show()
-                distanceText.show()
-            } else if (exerciseCategory == 'Endurance') {
-                setsText.show()
-                repsText.hide()
-                weightText.hide()
-                durationText.show()
-                distanceText.hide()
-            } else {
-                setsText.show()
-                repsText.show()
-                weightText.show()
-                durationText.show()
-                distanceText.show()
-            }
-        })
         return activityDiv
     }
 };

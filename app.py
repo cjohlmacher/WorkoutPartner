@@ -128,7 +128,7 @@ def show_all_workouts():
     recent_workouts = (Workout.query
                     .order_by(Workout.datetime.desc())
                     .filter_by(is_private=False)
-                    .limit(100)
+                    .limit(12)
                     .all())
     return render_template('Workout/workouts.html',workouts=recent_workouts)
 
@@ -242,7 +242,8 @@ def update_workout(workout_id):
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['GET'])
 def get_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
-    all_activities = workout.workout_activities
+    all_activities = workout.workout_activities.order_by(Activity.datetime.desc())
+    print(all_activities)
     serialized_activities = [
         activity.serialize() for activity in all_activities]
     for serialized_activity in serialized_activities:
@@ -283,7 +284,9 @@ def create_activity(workout_id):
 def update_activity(activity_id):
     activity = Activity.query.get_or_404(activity_id)
     for key,value in request.json.items():
-        if key == 'exercise':
+        if value == "":
+            setattr(activity,key,None)
+        elif key == 'exercise':
             exercise = Exercise.query.filter_by(name=value).first()
             setattr(activity,'exercise_id',exercise.id)
         else:

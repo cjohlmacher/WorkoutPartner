@@ -113,7 +113,7 @@ class Workout(db.Model):
     is_private = db.Column(db.Boolean, default=True)
     is_logged = db.Column(db.Boolean, default=True)
 
-    workout_activities = db.relationship('Activity', secondary='workout_activities', backref='workouts')
+    workout_activities = db.relationship('Activity', secondary='workout_activities', lazy='dynamic', backref='workouts')
     # exercises = db.relationship('Exercise', secondary='workout_activities', primaryjoin=(Activity.id == Workout_Activity.activity_id), secondaryjoin=(Activity.exercise_id==Exercise.id))
 
     def __repr__(self):
