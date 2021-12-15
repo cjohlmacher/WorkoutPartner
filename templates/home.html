@@ -2,11 +2,17 @@
 
 {% block title %}Workout Companion{% endblock %}
 {% block content %}
-    <h1>Workout Companion Home Page</h1>
-    {% if g.user %}
-        <a href="{{url_for('new_workout')}}" class="affirm">Start New Workout!</a>
-    {% else %}
-        <p>Log in to start a workout</p>
-    {% endif %}
-    <img class="cover-photo" src="https://images.pexels.com/photos/39308/runners-silhouettes-athletes-fitness-39308.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260" alt="Two men running" />
+    <div class="main-card">
+        {% if g.user %}
+            <a href="{{url_for('new_workout')}}" class="affirm">Start New Workout!</a>
+            <a href="{{url_for('show_all_workouts')}}" class="affirm">Browse Workouts</a>
+            <a href="{{url_for('view_workouts',user_id=g.user.id)}}" class="affirm">Your Workouts</a>
+        {% else %}
+            <p>Log in to start a workout</p>
+            <div class="button-bar">
+                <a class="button affirm" href="{{url_for('signup')}}">Sign Up</a>
+                <a class="button affirm" href="{{url_for('login')}}">Log In</a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

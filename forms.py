@@ -8,6 +8,7 @@ class CreateUserForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('E-mail', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[Length(min=8)])
+    confirm_password = PasswordField('Confirm Password',validators=[Length(min=8)])
 
 class AuthenticateForm(FlaskForm):
     """Form for authenticating user"""

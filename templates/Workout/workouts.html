@@ -3,11 +3,27 @@
 {% block title %} Workouts {% endblock %}
 
 {% block content %}
-    {% for workout in workouts %}
-        <h3>{{workout.name}} by {{workout.created_by.username}}</h3>
-        {% for exercise_name in workout.get_unique_exercises() %}
-            {{exercise_name}}
+    <div class="display-case">
+        {% for workout in workouts %}
+            <div class="div-card">
+                <h3>{{workout.name}} by {{workout.created_by.username}}</h3>
+                {% if workout.creator == g.user.id %}
+                    {% if workout.is_private %}
+                        <p class="add-on">(private)</p>
+                    {% else %}
+                        <p class="add-on">(shared)</p>
+                    {% endif %}
+                {% endif %}
+                <ul>
+                    {% for exercise_name in workout.get_unique_exercises() %}
+                        <li class="bulletless">{{exercise_name}}</li>
+                    {% endfor %}
+                </ul>
+                <a class="button" href="{{url_for('show_workout', workout_id=workout.id)}}">View Workout</a>
+                {% if workout.creator == g.user.id %}
+                    <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete Workout</a>
+                {% endif %}
+            </div>
         {% endfor %}
-        <a href="{{url_for('show_workout', workout_id=workout.id)}}">View Workout</a>
-    {% endfor %}
+    </div>
 {% endblock %}

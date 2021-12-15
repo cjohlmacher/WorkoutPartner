@@ -13,15 +13,18 @@ class Workout {
         this.name = $("#workout-identifier input").val();
     }
     renderWorkout() {
+        const workoutDiv = $('<div class="div-card"></div>');
         this.$workout.empty();
         this.form = new ActivityForm();
         for (let activity of this.activities) {
             const activityHTML = activity.generateHTML();
             this.$workout.append(activityHTML);
         };
-        $('main').append(this.$workout);
-        $('main').append(this.form.$form);
-        $('main').append($('<div class="exercise-info"></div>'));
+        $('main').append(workoutDiv);
+        workoutDiv.append(this.$workout);
+        workoutDiv.append(this.form.$form);
+        $('main').append($('<div class="exercise-info div-card"></div>'));
+        $('.exercise-info').hide();
         for (let activity of this.activities) {
             activity.filterStats()
         }
@@ -79,7 +82,7 @@ class ActivityForm {
         const weightText = createStatElement('Weight',"");
         const durationText = createStatElement('Duration',"");
         const distanceText = createStatElement('Distance',"");
-        const submitButton = $('<button></button>')
+        const submitButton = $('<button class="log"></button>')
         submitButton.text("Submit");
         submitButton.on("click",handleSubmit);
         $form.append(exerciseText);
@@ -126,7 +129,7 @@ class Activity {
             $(`div[data-id='${this.id}'] input[name='reps']`).parent().show()
             $(`div[data-id='${this.id}'] input[name='weight']`).parent().show()
             $(`div[data-id='${this.id}'] input[name='duration']`).parent().hide()
-            $(`div[data-='${this.id}'] input[name='distance']`).parent().hide()
+            $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide()
         } else if (exerciseCategory == 'Cardio') {
             $(`div[data-id='${this.id}'] input[name='sets']`).parent().hide()
             $(`div[data-id='${this.id}'] input[name='reps']`).parent().hide()
@@ -154,12 +157,12 @@ class Activity {
         const resp = await axios.get(`http://127.0.0.1:5000/api/exercises/${exerciseName}`)
         const exerciseId = resp.data.exercise.id;
         const apiResponse = await axios.get(`https://wger.de/api/v2/exerciseinfo/${exerciseId}`);
-        console.log(apiResponse);
         const exerciseDescription = apiResponse.data.description;
         const exerciseMuscles = apiResponse.data.muscles;
         const exerciseEquipment = apiResponse.data.equipment;
         $(".exercise-info").empty();
         generateExerciseHTML(exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment);
+        $('.exercise-info').show();
     }
     generateHTML() {
         const activityDiv = $('<div class="activity logged"></div>');
@@ -172,7 +175,7 @@ class Activity {
         const weightText = createStatElement('Weight',this.weight);
         const durationText = createStatElement('Duration',this.duration);
         const distanceText = createStatElement('Distance',this.distance);
-        const infoButton = $("<button>i</button>");
+        const infoButton = $("<button class='get-info'>i</button>");
         infoButton.on('click',this.requestInfo);
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
@@ -182,8 +185,6 @@ class Activity {
         infoDiv.append(distanceText);
         infoDiv.append(infoButton);
         activityDiv.append(infoDiv);
-        // console.log($(`div[data-id='${this.id}'] select`));
-        // 
         exerciseText.on('change',function (e) {
             const exerciseCategory = app.workout.exerciseLookup[e.target.value];
             if (exerciseCategory == 'Strength') {
@@ -244,14 +245,13 @@ const createStatElement = (label,value,optionsList=null) => {
 };
 
 const generateExerciseHTML = (exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment) => {
-    console.log(exerciseEquipment);
     const exerciseDiv = $(".exercise-info");
     const descriptionHTML = $(`${exerciseDescription}`);
     const musclesHTML = exerciseMuscles.map((muscle) => {
-        return $(`<li>${muscle.name}</li>`);
+        return $(`<li class="bulletless">${muscle.name}</li>`);
     });
     const equipmentHTML = exerciseEquipment.map((equipment)=>{
-        return $(`<li>${equipment.name}</li>`);
+        return $(`<li class="bulletless">${equipment.name}</li>`);
     });
     exerciseDiv.append(descriptionHTML);
     const muscleList = $(`<ul class="muscle-list">Targeted Muscles:</ul>`);

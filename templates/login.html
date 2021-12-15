@@ -2,8 +2,11 @@
 
 {% block title %} Log In {% endblock %}
 {% block content %}
-<form method="POST" id="login_form">
-    {% include "form_generic.html" %}
-    <button class="affirm">Log in</button>
-</form>
+<div class="main-card">
+    <h1>Welcome back!</h1>
+    <form method="POST" id="login_form">
+        {% include "form_generic.html" %}
+        <button class="affirm">Log in</button>
+    </form>
+</div>
 {% endblock %}
