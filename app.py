@@ -244,7 +244,10 @@ def update_workout(workout_id):
 @app.route('/api/workouts/<int:workout_id>/share', methods=['GET'])
 def toggle_share(workout_id):
     workout = Workout.query.get_or_404(workout_id)
-    if g.user.id == workout.creator:
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    elif g.user.id == workout.creator:
         workout.is_private = not workout.is_private
         db.session.add(workout)
         db.session.commit()
@@ -258,7 +261,10 @@ def toggle_share(workout_id):
 @app.route('/api/workouts/<int:workout_id>/log', methods=['GET'])
 def toggle_log(workout_id):
     workout = Workout.query.get_or_404(workout_id)
-    if g.user.id == workout.creator:
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    elif g.user.id == workout.creator:
         workout.is_logged = not workout.is_logged
         db.session.add(workout)
         db.session.commit()
@@ -273,8 +279,10 @@ def toggle_log(workout_id):
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['GET'])
 def get_workout(workout_id):
     workout = Workout.query.get_or_404(workout_id)
+    if not g.user:
+        response_json = {'response': unauthorized_access_message}
+        return (response_json,401)
     all_activities = workout.workout_activities.order_by(Activity.datetime.desc())
-    print(all_activities)
     serialized_activities = [
         activity.serialize() for activity in all_activities]
     for serialized_activity in serialized_activities:
@@ -282,54 +290,59 @@ def get_workout(workout_id):
         serialized_activity['exercise'] = exercise.name
     return jsonify(activities=serialized_activities)
 
-# @app.route('/api/activities')
-# def get_activity():
-#     all_activities = Activity.query.all()
-#     serialized_activities = [
-#         activity.serialize() for activity in all_activities]
-#     return jsonify(activities=serialized_activities)
-
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['POST'])
-@redirect_if_logged_out
 def create_activity(workout_id):
-    exercise_name = request.json['exercise']
-    exercise = Exercise.query.filter_by(name=exercise_name).first()
-    sets = request.json.get('sets',None) if request.json.get('sets',None) != "" else None
-    reps = request.json.get('reps',None) if request.json.get('reps',None) != "" else None
-    weight = request.json.get('weight',None) if request.json.get('weight',None) != "" else None
-    duration = request.json.get('duration',None) if request.json.get('duration',None) != "" else None
-    distance = request.json.get('distance',None)if request.json.get('distance',None) != "" else None
-    new_activity = Activity(performed_by=g.user.id,exercise_id=exercise.id,sets=sets,reps=reps,weight=weight,duration=duration,distance=distance)
-    db.session.add(new_activity)
-    db.session.commit()
-    new_relation = Workout_Activity(activity_id=new_activity.id, workout_id=workout_id)
-    db.session.add(new_relation)
-    db.session.commit()
-    serialized_activity = new_activity.serialize()
-    serialized_activity['exercise'] = exercise_name
-    response_json = jsonify(activity=serialized_activity)
-    return (response_json,201)
+    workout = Workout.query.get_or_404(workout_id)
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    elif g.user.id == workout.creator:
+        exercise_name = request.json['exercise']
+        exercise = Exercise.query.filter_by(name=exercise_name).first()
+        sets = request.json.get('sets',None) if request.json.get('sets',None) != "" else None
+        reps = request.json.get('reps',None) if request.json.get('reps',None) != "" else None
+        weight = request.json.get('weight',None) if request.json.get('weight',None) != "" else None
+        duration = request.json.get('duration',None) if request.json.get('duration',None) != "" else None
+        distance = request.json.get('distance',None)if request.json.get('distance',None) != "" else None
+        new_activity = Activity(performed_by=g.user.id,exercise_id=exercise.id,sets=sets,reps=reps,weight=weight,duration=duration,distance=distance)
+        db.session.add(new_activity)
+        db.session.commit()
+        new_relation = Workout_Activity(activity_id=new_activity.id, workout_id=workout_id)
+        db.session.add(new_relation)
+        db.session.commit()
+        serialized_activity = new_activity.serialize()
+        serialized_activity['exercise'] = exercise_name
+        response_json = jsonify(activity=serialized_activity)
+        return (response_json,201)
+    else:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
 
 @app.route('/api/activities/<int:activity_id>/update', methods=['POST'])
-@redirect_if_logged_out
 def update_activity(activity_id):
     activity = Activity.query.get_or_404(activity_id)
-    for key,value in request.json.items():
-        if value == "":
-            setattr(activity,key,None)
-        elif key == 'exercise':
-            exercise = Exercise.query.filter_by(name=value).first()
-            setattr(activity,'exercise_id',exercise.id)
-        else:
-            setattr(activity,key,value)
-    db.session.add(activity)
-    db.session.commit()
-    activity = Activity.query.get_or_404(activity_id)
-    serialized_activity = activity.serialize()
-    serialized_activity['exercise'] = activity.exercise.name
-    response_json = jsonify(activity=serialized_activity)
-    return (response_json,201)
-
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    elif g.user.id == activity.performed_by:    
+        for key,value in request.json.items():
+            if value == "":
+                setattr(activity,key,None)
+            elif key == 'exercise':
+                exercise = Exercise.query.filter_by(name=value).first()
+                setattr(activity,'exercise_id',exercise.id)
+            else:
+                setattr(activity,key,value)
+        db.session.add(activity)
+        db.session.commit()
+        activity = Activity.query.get_or_404(activity_id)
+        serialized_activity = activity.serialize()
+        serialized_activity['exercise'] = activity.exercise.name
+        response_json = jsonify(activity=serialized_activity)
+        return (response_json,201)
+    else:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
 
 @app.route('/api/exercises')
 def get_exercises():
