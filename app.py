@@ -213,11 +213,15 @@ def edit_workout(workout_id):
 @app.route('/workouts/<int:workout_id>/delete')
 @redirect_if_logged_out
 def delete_workout(workout_id):
-    print('Checking ',workout_id)
     workout = Workout.query.get_or_404(workout_id)
     if g.user.id == workout.creator:
         db.session.delete(workout)
         db.session.commit()
+        if request.referrer:
+            if f'workouts/{workout_id}' in request.referrer:
+                return redirect(f'/users/{g.user.id}/workouts')
+            else:
+                return redirect(f"{request.referrer}")
         return redirect(f'/users/{g.user.id}/workouts')
     else:
         flash('You do not have permission to delete this workout', 'danger')
@@ -340,6 +344,21 @@ def update_activity(activity_id):
         serialized_activity['exercise'] = activity.exercise.name
         response_json = jsonify(activity=serialized_activity)
         return (response_json,201)
+    else:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+
+@app.route('/api/activities/<int:activity_id>/delete')
+def delete_activity(activity_id):
+    activity = Activity.query.get_or_404(activity_id)
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    elif g.user.id == activity.performed_by: 
+        db.session.delete(activity)
+        db.session.commit()
+        response_json = {'response': "Resource successfully deleted"}
+        return (response_json,200)
     else:
         response_json = {'response': unauthorized_edit_message}
         return (response_json,401)
