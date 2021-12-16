@@ -247,6 +247,10 @@ div.tags.row {
     color: white;
 }
 
+.tag.static {
+    cursor: auto;
+}
+
 .info {
     display: flex;
     flex-direction: row;

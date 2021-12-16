@@ -10,14 +10,14 @@
                 {% if workout.creator == g.user.id %}
                     <div class="tags row">
                         {% if workout.is_private == true %}
-                            <button class="tag share inactive">Private</button>
+                            <button class="tag share inactive static">Private</button>
                         {% else %}
-                            <button class="tag share">Shared</button>
+                            <button class="tag share static">Shared</button>
                         {% endif %}
                         {% if workout.is_logged == true %}
-                            <button class="tag logged">Logged</button>
+                            <button class="tag logged static">Logged</button>
                         {% else %}
-                            <button class="tag logged inactive">Untracked</button>
+                            <button class="tag logged inactive static">Untracked</button>
                         {% endif %}
                     </div>
                 {% endif %}
