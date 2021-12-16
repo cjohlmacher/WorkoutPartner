@@ -1,6 +1,7 @@
 class App {
     constructor() {
         this.workout = new Workout();
+        this.base_url = $('#base-url').data('url');
     }
 }
 
@@ -39,22 +40,22 @@ class Workout {
     }
     async getExerciseDetails(e) {
         e.preventDefault();
-        const resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
+        const resp = await axios.get(`${app.base_url}/api/exercises`);
         
     }
     async updateWorkoutName(e) {
         e.preventDefault();
         const json_request = {};
         json_request['name'] = e.target.value;
-        const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/edit`,json_request);
+        const response = await axios.post(`${app.base_url}/api/workouts/${app.workout.id}/edit`,json_request);
     }
     async fetchAllData() {
-        const exercise_resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
+        const exercise_resp = await axios.get(`${app.base_url}/api/exercises`);
         const allExercises = exercise_resp['data']['exercises'];
         for (let exercise of allExercises) {
             this.exerciseLookup[exercise['name']] = exercise['type'];
         };
-        const activity_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
+        const activity_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
         const activities = activity_resp['data'][`activities`];
         for (const activity of activities) {
             const newActivity = new Activity(activity.id,activity.exercise,activity.sets,activity.reps,activity.weight,activity.duration,activity.distance);
@@ -76,7 +77,7 @@ class Workout {
     }
     async toggleShare(e) {
         e.preventDefault();
-        const toggle_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/share`);
+        const toggle_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/share`);
         const shareTag = $('button.share');
         shareTag.toggleClass('inactive');
         if (shareTag.text() == 'Private') {
@@ -87,7 +88,7 @@ class Workout {
     }
     async toggleLog(e) {
         e.preventDefault();
-        const toggle_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/log`);
+        const toggle_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/log`);
         const logTag = $('button.logged');
         logTag.toggleClass('inactive');
         if (logTag.text() == 'Logged') {
@@ -184,7 +185,7 @@ class Activity {
     }
     async deleteActivity(e) {
         e.preventDefault();
-        const resp = await axios.get(`http://127.0.0.1:5000/api/activities/${this.id}/delete`);
+        const resp = await axios.get(`${app.base_url}/api/activities/${this.id}/delete`);
         $(`div[data-id='${this.id}']`).remove();
         const indexToRemove = app.workout.activities.indexOf(this);
         app.workout.activities.splice(indexToRemove,1);
@@ -193,7 +194,7 @@ class Activity {
         e.preventDefault();
         const activityId = e.target.parentElement.dataset.id;
         const exerciseName = $(`div[data-id=${activityId}] select option:selected`).val();
-        const resp = await axios.get(`http://127.0.0.1:5000/api/exercises/${exerciseName}`)
+        const resp = await axios.get(`${app.base_url}/api/exercises/${exerciseName}`)
         const exerciseId = resp.data.exercise.id;
         const apiResponse = await axios.get(`https://wger.de/api/v2/exerciseinfo/${exerciseId}`);
         const exerciseDescription = apiResponse.data.description;
@@ -305,7 +306,7 @@ async function handleSubmit(e) {
             $form.css('background-color','rgb(36, 133, 212)');
         },200);
     } else {
-        const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/activities`,json_request);
+        const response = await axios.post(`${app.base_url}/api/workouts/${app.workout.id}/activities`,json_request);
         const {id,exercise,sets,reps,weight,duration,distance} = response['data']['activity']
         const newActivity = new Activity(id,exercise,sets,reps,weight,duration,distance);
         app.workout.addToWorkout(newActivity);
@@ -318,5 +319,5 @@ async function handleChange(e) {
     const activity_id = e.target.parentElement.parentElement.dataset.id;
     const json_request = {};
     json_request[e.target.name] = e.target.value;
-    const response = await axios.post(`http://127.0.0.1:5000/api/activities/${activity_id}/update`,json_request);
+    const response = await axios.post(`${app.base_url}/api/activities/${activity_id}/update`,json_request);
 };

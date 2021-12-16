@@ -23,7 +23,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "iamsecret")
 app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 toolbar = DebugToolbarExtension(app)
 
@@ -34,7 +34,8 @@ def assign_globals():
     """If session has a user key, assign user to Flask global."""
 
     g.user = User.query.get(session[USER_KEY]) if USER_KEY in session else None
-    g.APP_NAME = "Workout Companion"
+    g.APP_NAME = "Workout Spotter"
+    g.BASE_URL = os.environ.get('BASE_URL',"http://127.0.0.1:5000")
 
 def session_login(user):
     """Log in user."""
