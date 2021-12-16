@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %} Logs {% endblock %}
+
+{% block content %}
+    <div class="display-case">
+        {% for workout in workouts %}
+            <div class="div-card log-card">
+                <h3>{{workout.name}} {{workout.display_date()}}</h3>
+                {% if workout.creator == g.user.id %}
+                    <div class="tags row">
+                        {% if workout.is_private == true %}
+                            <button class="tag share inactive static">Private</button>
+                        {% else %}
+                            <button class="tag share static">Shared</button>
+                        {% endif %}
+                        {% if workout.is_logged == true %}
+                            <button class="tag logged static">Logged</button>
+                        {% else %}
+                            <button class="tag logged inactive static">Untracked</button>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <ul class="horizontal">
+                    {% for exercise_name in workout.get_unique_exercises() %}
+                        <li class="bulletless">{{exercise_name}}</li>
+                    {% endfor %}
+                </ul>
+                <a class="button" href="{{url_for('show_workout', workout_id=workout.id)}}">View Workout</a>
+                {% if workout.creator == g.user.id %}
+                    <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete Workout</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='log.js') }}"></script>
+{% endblock %}

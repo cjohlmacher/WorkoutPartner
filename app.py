@@ -357,3 +357,34 @@ def get_exercise_info(exercise_name):
     exercise = Exercise.query.filter_by(name=exercise_name).first()
     serialized_exercise = exercise.serialize()
     return jsonify(exercise=serialized_exercise)
+
+@app.route('/users/<int:user_id>/logs')
+@redirect_if_logged_out
+def show_logs(user_id):
+    user = User.query.get_or_404(user_id)
+    if g.user.id == user_id:
+        logged_workouts = []
+        for workout in user.workouts:
+            if workout.is_logged:
+                logged_workouts.append(workout)
+        return render_template('Log/logs.html',workouts=logged_workouts)
+    else:
+        flash(unauthorized_access_message)
+        return redirect('/')
+
+@app.route('/api/users/logs/<exercise_name>/<stat_name>')
+@redirect_if_logged_out
+def show_exercise_logs(exercise_name,stat_name):
+    if not g.user:
+        response_json = {'response': unauthorized_edit_message}
+        return (response_json,401)
+    user = User.query.get(g.user.id)
+    exercise = Exercise.query.filter_by(name=exercise_name).first()
+    logged_stats = []
+    for workout in user.workouts:
+        if workout.is_logged:
+            for activity in workout.workout_activities:
+                if activity.exercise_id == exercise.id:
+                    logged_stats.append({'datetime': activity.datetime, "stat": activity.weight})
+    response_json = jsonify(stats=logged_stats)
+    return (response_json,201)

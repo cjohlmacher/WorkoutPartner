@@ -7,6 +7,7 @@
             <a href="{{url_for('new_workout')}}" class="affirm">Start New Workout!</a>
             <a href="{{url_for('show_all_workouts')}}" class="affirm">Browse Workouts</a>
             <a href="{{url_for('view_workouts',user_id=g.user.id)}}" class="affirm">Your Workouts</a>
+            <a href="{{url_for('show_logs',user_id=g.user.id)}}" class="affirm">Your Workout Log</a>
         {% else %}
             <p>Log in to start a workout</p>
             <div class="button-bar">

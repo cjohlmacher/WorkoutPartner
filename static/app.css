@@ -299,3 +299,27 @@ h2 > .seamless {
 .muscle-list, .equipment-list {
     text-decoration: none;
 }
+
+div.log-card {
+    display: flex;
+    flex-direction: row;
+    margin: 5px;
+    padding: 5px 10px;
+}
+
+ul.horizontal {
+    display: flex;
+    flex-direction: row;
+}
+
+th {
+    background-color: grey;
+}
+
+tbody {
+    background-color: white;
+}
+
+td {
+    border: solid 1px black;
+}
