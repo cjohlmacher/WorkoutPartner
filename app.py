@@ -224,6 +224,22 @@ def delete_workout(workout_id):
         flash('You do not have permission to delete this workout', 'danger')
         return redirect(f"/workouts/{workout.id}")
 
+#View Routes for Logs
+@app.route('/users/<int:user_id>/logs')
+@redirect_if_logged_out
+def show_logs(user_id):
+    """Allows a user to view their logged workouts"""
+    user = User.query.get_or_404(user_id)
+    if g.user.id == user_id:
+        logged_workouts = []
+        for workout in user.workouts:
+            if workout.is_logged:
+                logged_workouts.append(workout)
+        return render_template('Log/logs.html',workouts=logged_workouts)
+    else:
+        flash(unauthorized_access_message)
+        return redirect('/')
+
 # API Routes for Workouts
 @app.route('/api/workouts/<int:workout_id>/edit', methods=['POST'])
 @error_response_if_logged_out
@@ -371,26 +387,33 @@ def get_exercise_info(exercise_name):
     serialized_exercise = exercise.serialize()
     return jsonify(exercise=serialized_exercise)
 
-@app.route('/users/<int:user_id>/logs')
-@redirect_if_logged_out
-def show_logs(user_id):
-    user = User.query.get_or_404(user_id)
-    if g.user.id == user_id:
-        logged_workouts = []
-        for workout in user.workouts:
-            if workout.is_logged:
-                logged_workouts.append(workout)
-        return render_template('Log/logs.html',workouts=logged_workouts)
-    else:
-        flash(unauthorized_access_message)
-        return redirect('/')
+#API Routes for Logs
+@app.route('/api/users/logs/<exercise_name>')
+@error_response_if_logged_out
+def show_exercise_logs(exercise_name):
+    """API to retrieve a user's logs for a specific exercise."""
+    user = User.query.get(g.user.id)
+    exercise = Exercise.query.filter_by(name=exercise_name).first()
+    logged_stats = []
+    for workout in user.workouts:
+        if workout.is_logged:
+            for activity in workout.workout_activities:
+                if activity.exercise_id == exercise.id:
+                    logged_stats.append({
+                        'datetime': activity.datetime,
+                        "weight": activity.weight,
+                        "sets": activity.sets,
+                        "reps": activity.reps,
+                        "duration": activity.duration,
+                        "distance": activity.distance
+                        })
+    response_json = jsonify(stats=logged_stats)
+    return (response_json,201)
 
 @app.route('/api/users/logs/<exercise_name>/<stat_name>')
-@redirect_if_logged_out
-def show_exercise_logs(exercise_name,stat_name):
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
+@error_response_if_logged_out
+def show_exercise_stat_logs(exercise_name,stat_name):
+    """API to retrieve a user's logs for a specific exercise and specific stat."""
     user = User.query.get(g.user.id)
     exercise = Exercise.query.filter_by(name=exercise_name).first()
     logged_stats = []

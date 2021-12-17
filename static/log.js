@@ -19,53 +19,63 @@ class Log {
         const exerciseList = Object.keys(app.log.exerciseLookup);
         exerciseList.sort();
         const exerciseDropdown = createStatElement('Exercise',this.exercise,exerciseList);
-        console.log(exerciseDropdown);
         this.$log.append(exerciseDropdown);
-        $('main').append(this.$log);
+        this.$results = $('<div class="div-card results"><p class="low-margin">Select an Exercise to View Logs</p></div>');
+        this.$log.append(this.$results);
+        $('main').prepend(this.$log);
         $('select').on('change',handleChange.bind(this))
-        console.log($('select'));
     }
     buildTable(json_response) {
         const $table = $('<table></table>');
-        const $tableHeader = $('<tr><th>Date</th><th>Weight</th></tr>');
+        const $tableHeader = $('<tr class="head"></tr>');
+        const $dateHeader = $(`<td class="date"><div class="cell">Date</div></td>`);
+        $tableHeader.append($dateHeader);
+        for (let stat of ['Sets','Reps','Weight','Distance','Duration']) {
+            const statTableHead = $(`<td><div class="cell">${stat}</div></td>`);
+            $tableHeader.append(statTableHead);
+        }
         const $tableBody = $('<tbody></tbody>');
         $table.append($tableHeader);
         for (let datum of json_response['data']['stats']) {
-            const $tableRow = $(`<tr><td>${datum.datetime}</td><td>${datum.stat}</td></tr>`)
+            const $tableRow = $(`<tr></tr>`);
+            const $dateDatum = $(`<td class="date"><div class="cell"><p>${datum['datetime']}</p></div></td>`);
+            $tableRow.append($dateDatum);
+            for (let stat of ['sets','reps','weight','distance','duration']) {
+                const $tableData = datum[stat] ? $(`<td><div class="cell"><p>${datum[stat]}</p></div></td>`) : $(`<td><div class="cell"></div></td>`);
+                $tableRow.append($tableData);
+            }
             $tableBody.append($tableRow);
         };
         $table.append($tableBody);
+        
+        // const $table = $('<table></table>');
+        // const $tableHeader = $('<tr></tr>');
+        // for (let stat of ['Date','Sets','Reps','Weight','Distance','Duration']) {
+        //     const statTableHead = $(`<th>${stat}</th>`);
+        //     $tableHeader.append(statTableHead);
+        // }
+        // const $tableBody = $('<tbody></tbody>');
+        // $table.append($tableHeader);
+        // for (let datum of json_response['data']['stats']) {
+        //     const $tableRow = $(`<tr></tr>`);
+        //     for (let stat of ['datetime','sets','reps','weight','distance','duration']) {
+        //         const $tableData = datum[stat] ? $(`<td>${datum[stat]}</td>`) : $(`<td></td>`);
+        //         $tableRow.append($tableData);
+        //     }
+        //     $tableBody.append($tableRow);
+        // };
+        // $table.append($tableBody);
         return $table;
     }
     async buildChart(json_response) {
         const chartImage = `https://image-charts.com/chart?cht=ls&chd=s:20_4060809090&chs=700x200&chf=b0,lg,90,03a9f4,0,3f51b5,1`;
-        console.log(chartImage);
         return `<img class="chart" src=${chartImage} />`
     }
     renderLog() {
         const logDiv = $('<div class="div-card"></div>');
         this.$log.empty();
-        // this.form = new ActivityForm();
-        // for (let activity of this.activities) {
-        //     const activityHTML = activity.generateHTML();
-        //     this.$workout.append(activityHTML);
-        // };
         $('main').append(logDiv);
         logDiv.append(this.$log);
-        // logDiv.append(this.form.$form);
-        // $('main').append($('<div class="exercise-info div-card"></div>'));
-        // $('.exercise-info').hide();
-        // for (let activity of this.activities) {
-        //     activity.filterStats()
-        // }
-        // $('.activity.logged input.stat-value').each(function() {
-        //     $(this).on('change',handleChange)
-        // });
-        // $('.activity.logged select').each(function() {
-        //     $(this).on('change',handleChange)
-        // });
-        // $("#workout-identifier input").on('change',this.updateWorkoutName)
-        // this.addTagEvents();
     }
     async fetchAllData() {
         const exercise_resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
@@ -73,13 +83,6 @@ class Log {
         for (let exercise of allExercises) {
             this.exerciseLookup[exercise['name']] = exercise['type'];
         };
-        const activity_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
-        const activities = activity_resp['data'][`activities`];
-        for (const activity of activities) {
-            const newActivity = new Activity(activity.id,activity.exercise,activity.sets,activity.reps,activity.weight,activity.duration,activity.distance);
-            this.activities.push(newActivity);
-        };
-        this.renderWorkout();
     }
     addTagEvents() {
         const shareTag = $('button.share');
@@ -140,18 +143,16 @@ const createStatElement = (label,value,optionsList=null) => {
 
 async function handleChange(e) {
     e.preventDefault();
-    console.log(e.target);
+    const $results = $('.results');
+    $results.empty();
     const json_request = {};
     json_request[e.target.name] = e.target.value;
-    const response = await axios.get(`http://127.0.0.1:5000/api/users/logs/${e.target.value}/weight`);
-    console.log(response);
-    const chart = await this.buildChart(response);
+    const response = await axios.get(`http://127.0.0.1:5000/api/users/logs/${e.target.value}`);
     const dataTable = this.buildTable(response);
-    const $results = $('<div class="div-card"></div>');
-    console.log(dataTable);
+    $results.append($(`<p class="low-margin">${e.target.value}</p>`))
     $results.append(dataTable);
-    $results.append(chart);
-    $('main').append($results);
+    // const chart = await this.buildChart(response);
+    // $results.append(chart);
 };
 
 class ActivityForm {
@@ -163,20 +164,10 @@ class ActivityForm {
         const exerciseList = Object.keys(app.workout.exerciseLookup);
         exerciseList.sort();
         const exerciseText = createStatElement('Exercise',"",exerciseList);
-        const setsText = createStatElement('Sets',"");
-        const repsText = createStatElement('Reps',"");
-        const weightText = createStatElement('Weight',"");
-        const durationText = createStatElement('Duration',"");
-        const distanceText = createStatElement('Distance',"");
         const submitButton = $('<button class="log"></button>')
         submitButton.text("Submit");
         submitButton.on("click",handleSubmit);
         $form.append(exerciseText);
-        $form.append(setsText);
-        $form.append(repsText);
-        $form.append(weightText);
-        $form.append(durationText);
-        $form.append(distanceText);
         $form.append(submitButton);
         return $form
     }
@@ -200,7 +191,6 @@ class ActivityForm {
 class Activity {
     constructor(id,exercise,sets,reps,weight,duration,distance) {
         this.id = id;
-        //this.exercise = exercise.charAt(0).toUpperCase()+exercise.slice(1);
         this.exercise = exercise;
         this.sets = sets;
         this.reps = reps;
@@ -240,13 +230,6 @@ class Activity {
         const exerciseName = $(`div[data-id=${activityId}] select option:selected`).val();
         const resp = await axios.get(`http://127.0.0.1:5000/api/exercises/${exerciseName}`)
         const exerciseId = resp.data.exercise.id;
-        const apiResponse = await axios.get(`https://wger.de/api/v2/exerciseinfo/${exerciseId}`);
-        const exerciseDescription = apiResponse.data.description;
-        const exerciseMuscles = apiResponse.data.muscles;
-        const exerciseEquipment = apiResponse.data.equipment;
-        $(".exercise-info").empty();
-        generateExerciseHTML(exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment);
-        $('.exercise-info').show();
     }
     generateHTML() {
         const activityDiv = $('<div class="activity logged"></div>');
@@ -274,29 +257,6 @@ class Activity {
         activityDiv.append(infoDiv);
         return activityDiv
     }
-};
-
-const generateExerciseHTML = (exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment) => {
-    const exerciseDiv = $(".exercise-info");
-    const descriptionHTML = $(`${exerciseDescription}`);
-    const musclesHTML = exerciseMuscles.map((muscle) => {
-        return $(`<li class="bulletless">${muscle.name}</li>`);
-    });
-    const equipmentHTML = exerciseEquipment.map((equipment)=>{
-        return $(`<li class="bulletless">${equipment.name}</li>`);
-    });
-    exerciseDiv.append(descriptionHTML);
-    const muscleList = $(`<ul class="muscle-list">Targeted Muscles:</ul>`);
-    for (muscleHTML of musclesHTML) {
-        muscleList.append(muscleHTML);
-    };
-    exerciseDiv.append(muscleList);
-    const equipmentList = $(`<ul class="equipment-list">Equipment:</ul>`);
-    for (eachEquipmentHTML of equipmentHTML) {
-        equipmentList.append(eachEquipmentHTML);
-    };
-    exerciseDiv.append(equipmentList);
-    return exerciseDiv;
 };
 
 const app = new App();
