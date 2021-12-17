@@ -4,6 +4,7 @@
 
 {% block content %}
     <div class="display-case logs">
+        <p id="base-url" style="display: none" data-url='{{g.BASE_URL}}'></p>
         {% for workout in workouts %}
             <div class="div-card log-card">
                 <div class="log-section">
