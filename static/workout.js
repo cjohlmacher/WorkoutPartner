@@ -1,6 +1,7 @@
 class App {
     constructor() {
         this.workout = new Workout();
+        this.base_url = $('#base-url').data('url');
     }
 }
 
@@ -39,22 +40,22 @@ class Workout {
     }
     async getExerciseDetails(e) {
         e.preventDefault();
-        const resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
+        const resp = await axios.get(`${app.base_url}/api/exercises`);
         
     }
     async updateWorkoutName(e) {
         e.preventDefault();
         const json_request = {};
         json_request['name'] = e.target.value;
-        const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/edit`,json_request);
+        const response = await axios.post(`${app.base_url}/api/workouts/${app.workout.id}/edit`,json_request);
     }
     async fetchAllData() {
-        const exercise_resp = await axios.get(`http://127.0.0.1:5000/api/exercises`);
+        const exercise_resp = await axios.get(`${app.base_url}/api/exercises`);
         const allExercises = exercise_resp['data']['exercises'];
         for (let exercise of allExercises) {
             this.exerciseLookup[exercise['name']] = exercise['type'];
         };
-        const activity_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
+        const activity_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
         const activities = activity_resp['data'][`activities`];
         for (const activity of activities) {
             const newActivity = new Activity(activity.id,activity.exercise,activity.sets,activity.reps,activity.weight,activity.duration,activity.distance);
@@ -66,6 +67,7 @@ class Workout {
         this.activities.push(activity);
         const activityHTML = activity.generateHTML();
         this.$workout.append(activityHTML);
+        activity.filterStats();
     }
     addTagEvents() {
         const shareTag = $('button.share');
@@ -75,7 +77,7 @@ class Workout {
     }
     async toggleShare(e) {
         e.preventDefault();
-        const toggle_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/share`);
+        const toggle_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/share`);
         const shareTag = $('button.share');
         shareTag.toggleClass('inactive');
         if (shareTag.text() == 'Private') {
@@ -86,7 +88,7 @@ class Workout {
     }
     async toggleLog(e) {
         e.preventDefault();
-        const toggle_resp = await axios.get(`http://127.0.0.1:5000/api/workouts/${this.id}/log`);
+        const toggle_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/log`);
         const logTag = $('button.logged');
         logTag.toggleClass('inactive');
         if (logTag.text() == 'Logged') {
@@ -167,21 +169,32 @@ class Activity {
         if (!this.distance) {
             $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide();
         };
+        $(`div[data-id='${this.id}'] button.toggle-stats`).off('click',this.filterStats);
+        $(`div[data-id='${this.id}'] button.toggle-stats`).off('click',this.expandStats);
+        $(`div[data-id='${this.id}'] button.toggle-stats`).on('click',this.expandStats.bind(this));
     }
     expandStats(e) {
         e.preventDefault();
-        const activityId = this.parentElement.dataset.id;
-        $(`div[data-id='${activityId}'] input[name='sets']`).parent().show();
-        $(`div[data-id='${activityId}'] input[name='reps']`).parent().show();
-        $(`div[data-id='${activityId}'] input[name='weight']`).parent().show();
-        $(`div[data-id='${activityId}'] input[name='duration']`).parent().show();
-        $(`div[data-id='${activityId}'] input[name='distance']`).parent().show();
+        $(`div[data-id='${this.id}'] input[name='sets']`).parent().show();
+        $(`div[data-id='${this.id}'] input[name='reps']`).parent().show();
+        $(`div[data-id='${this.id}'] input[name='weight']`).parent().show();
+        $(`div[data-id='${this.id}'] input[name='duration']`).parent().show();
+        $(`div[data-id='${this.id}'] input[name='distance']`).parent().show();
+        $(`div[data-id='${this.id}'] button.toggle-stats`).off('click',this.expandStats);
+        $(`div[data-id='${this.id}'] button.toggle-stats`).on('click',this.filterStats.bind(this));
+    }
+    async deleteActivity(e) {
+        e.preventDefault();
+        const resp = await axios.get(`${app.base_url}/api/activities/${this.id}/delete`);
+        $(`div[data-id='${this.id}']`).remove();
+        const indexToRemove = app.workout.activities.indexOf(this);
+        app.workout.activities.splice(indexToRemove,1);
     }
     async requestInfo(e) {
         e.preventDefault();
         const activityId = e.target.parentElement.dataset.id;
         const exerciseName = $(`div[data-id=${activityId}] select option:selected`).val();
-        const resp = await axios.get(`http://127.0.0.1:5000/api/exercises/${exerciseName}`)
+        const resp = await axios.get(`${app.base_url}/api/exercises/${exerciseName}`)
         const exerciseId = resp.data.exercise.id;
         const apiResponse = await axios.get(`https://wger.de/api/v2/exerciseinfo/${exerciseId}`);
         const exerciseDescription = apiResponse.data.description;
@@ -202,10 +215,12 @@ class Activity {
         const weightText = createStatElement('Weight',this.weight);
         const durationText = createStatElement('Duration',this.duration);
         const distanceText = createStatElement('Distance',this.distance);
-        const expandButton = $("<button class='get-info'>...</button>");
+        const expandButton = $("<button class='toggle-stats'>...</button>");
         const infoButton = $("<button class='get-info'>i</button>");
-        expandButton.on('click',this.expandStats);
+        const deleteButton = $("<button class='delete'>X</button>");
+        expandButton.on('click',this.expandStats.bind(this));
         infoButton.on('click',this.requestInfo);
+        deleteButton.on('click',this.deleteActivity.bind(this));
         infoDiv.append(exerciseText);
         infoDiv.append(setsText);
         infoDiv.append(repsText);
@@ -214,6 +229,7 @@ class Activity {
         infoDiv.append(distanceText);
         infoDiv.append(expandButton);
         infoDiv.append(infoButton);
+        infoDiv.append(deleteButton);
         activityDiv.append(infoDiv);
         return activityDiv
     }
@@ -240,7 +256,7 @@ const createStatElement = (label,value,optionsList=null) => {
     } else {
         return $(
             `<div class="stat">
-                <input type="number" id="${label}" value="${value}" name="${label.toLowerCase()}" class="stat-value" />
+                <input type="number" id="${label}" value="${value}" name="${label.toLowerCase()}" min="0" class="stat-value" />
                 <label class="stat-label" for="${label}">${label}</label>
             </div>`)
     };
@@ -277,14 +293,25 @@ async function handleSubmit(e) {
     const $form = $('form');
     const inputs = $form.serializeArray();
     const json_request = {};
+    let badInput = false;
     for (let input of inputs) {
         json_request[input.name] = input.value;
+        if (Number(input.value) < 0) {
+            badInput = true;
+        }
     };
-    const response = await axios.post(`http://127.0.0.1:5000/api/workouts/${app.workout.id}/activities`,json_request);
-    const {id,exercise,sets,reps,weight,duration,distance} = response['data']['activity']
-    const newActivity = new Activity(id,exercise,sets,reps,weight,duration,distance);
-    app.workout.addToWorkout(newActivity);
-    $form[0].reset()
+    if (badInput) {
+        $form.css('background-color','rgb(194, 45, 45)');
+        setTimeout(function() {
+            $form.css('background-color','rgb(36, 133, 212)');
+        },200);
+    } else {
+        const response = await axios.post(`${app.base_url}/api/workouts/${app.workout.id}/activities`,json_request);
+        const {id,exercise,sets,reps,weight,duration,distance} = response['data']['activity']
+        const newActivity = new Activity(id,exercise,sets,reps,weight,duration,distance);
+        app.workout.addToWorkout(newActivity);
+        $form[0].reset()
+    }
 }
 
 async function handleChange(e) {
@@ -292,5 +319,5 @@ async function handleChange(e) {
     const activity_id = e.target.parentElement.parentElement.dataset.id;
     const json_request = {};
     json_request[e.target.name] = e.target.value;
-    const response = await axios.post(`http://127.0.0.1:5000/api/activities/${activity_id}/update`,json_request);
+    const response = await axios.post(`${app.base_url}/api/activities/${activity_id}/update`,json_request);
 };
