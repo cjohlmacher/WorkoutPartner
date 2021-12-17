@@ -1,4 +1,5 @@
 class App {
+    /* Class for the App view */
     constructor() {
         this.workout = new Workout();
         this.base_url = $('#base-url').data('url');
@@ -6,6 +7,7 @@ class App {
 }
 
 class Workout {
+    /* Class for the Workout */
     constructor() {
         this.activities = [];
         this.id = $("#workout-identifier").data('workoutid')
@@ -14,6 +16,7 @@ class Workout {
         this.name = $("#workout-identifier input").val();
     }
     renderWorkout() {
+        /* Render the HTML of the workout */
         const workoutDiv = $('<div class="div-card"></div>');
         this.$workout.empty();
         this.form = new ActivityForm();
@@ -39,23 +42,26 @@ class Workout {
         this.addTagEvents();
     }
     async getExerciseDetails(e) {
+        /* Fetch the list of exercises in the database */
         e.preventDefault();
         const resp = await axios.get(`${app.base_url}/api/exercises`);
         
     }
     async updateWorkoutName(e) {
+        /* Communicate with the database API to change the name of the workout */
         e.preventDefault();
         const json_request = {};
         json_request['name'] = e.target.value;
         const response = await axios.post(`${app.base_url}/api/workouts/${app.workout.id}/edit`,json_request);
     }
     async fetchAllData() {
+        /* Fetch all existing data for the workout from the database API */
         const exercise_resp = await axios.get(`${app.base_url}/api/exercises`);
         const allExercises = exercise_resp['data']['exercises'];
         for (let exercise of allExercises) {
             this.exerciseLookup[exercise['name']] = exercise['type'];
         };
-        const activity_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/activities`); //Replace hard-coded URL with environ variable before publishing
+        const activity_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/activities`);
         const activities = activity_resp['data'][`activities`];
         for (const activity of activities) {
             const newActivity = new Activity(activity.id,activity.exercise,activity.sets,activity.reps,activity.weight,activity.duration,activity.distance);
@@ -64,18 +70,21 @@ class Workout {
         this.renderWorkout();
     }
     addToWorkout(activity) {
+        /* Add an instance of Activity Class to the workout and render its HTML */
         this.activities.push(activity);
         const activityHTML = activity.generateHTML();
         this.$workout.append(activityHTML);
         activity.filterStats();
     }
     addTagEvents() {
+        /* Add Tags */
         const shareTag = $('button.share');
         const logTag = $('button.logged');
         shareTag.on('click', this.toggleShare.bind(this));
         logTag.on('click', this.toggleLog.bind(this));
     }
     async toggleShare(e) {
+        /* Communicate with the database API to toggle the share status of a workout */
         e.preventDefault();
         const toggle_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/share`);
         const shareTag = $('button.share');
@@ -87,6 +96,7 @@ class Workout {
         };
     }
     async toggleLog(e) {
+        /* Communicate with the database API to toggle the logged status of a workout */
         e.preventDefault();
         const toggle_resp = await axios.get(`${app.base_url}/api/workouts/${this.id}/log`);
         const logTag = $('button.logged');
@@ -104,6 +114,7 @@ class ActivityForm {
         this.$form = this.generateForm();
     }
     generateForm() {
+        /* Renders the HTML for the form to create a new activity */
         const $form = $('<form class="activity new"></form>');
         const exerciseList = Object.keys(app.workout.exerciseLookup);
         exerciseList.sort();
@@ -126,6 +137,7 @@ class ActivityForm {
         return $form
     }
     createInput(displayName,inputName,inputType,className) {
+        /* Helper function for creating the HTML for an input */
         const inputDiv = $('<div></div>');
         inputDiv.addClass(className);
         const label = $('<label></label>');
@@ -145,7 +157,6 @@ class ActivityForm {
 class Activity {
     constructor(id,exercise,sets,reps,weight,duration,distance) {
         this.id = id;
-        //this.exercise = exercise.charAt(0).toUpperCase()+exercise.slice(1);
         this.exercise = exercise;
         this.sets = sets;
         this.reps = reps;
@@ -154,6 +165,7 @@ class Activity {
         this.distance = distance;
     }
     filterStats() {
+        /* Filter the displayed stats for an activity to only show stats with values */
         if (!this.sets) {
             $(`div[data-id='${this.id}'] input[name='sets']`).parent().hide();
         };
@@ -174,6 +186,7 @@ class Activity {
         $(`div[data-id='${this.id}'] button.toggle-stats`).on('click',this.expandStats.bind(this));
     }
     expandStats(e) {
+        /* Display all the stats for an activity, regardless of if they have a value */
         e.preventDefault();
         $(`div[data-id='${this.id}'] input[name='sets']`).parent().show();
         $(`div[data-id='${this.id}'] input[name='reps']`).parent().show();
@@ -184,6 +197,7 @@ class Activity {
         $(`div[data-id='${this.id}'] button.toggle-stats`).on('click',this.filterStats.bind(this));
     }
     async deleteActivity(e) {
+        /* Delete an activity through the database API and remove from HTML */
         e.preventDefault();
         const resp = await axios.get(`${app.base_url}/api/activities/${this.id}/delete`);
         $(`div[data-id='${this.id}']`).remove();
@@ -191,6 +205,7 @@ class Activity {
         app.workout.activities.splice(indexToRemove,1);
     }
     async requestInfo(e) {
+        /* Request exercise info from the Wger API and display the information */
         e.preventDefault();
         const activityId = e.target.parentElement.dataset.id;
         const exerciseName = $(`div[data-id=${activityId}] select option:selected`).val();
@@ -205,6 +220,7 @@ class Activity {
         $('.exercise-info').show();
     }
     generateHTML() {
+        /* Generate the HTML for an Activity */
         const activityDiv = $('<div class="activity logged"></div>');
         const infoDiv = $(`<div class="info" data-id="${this.id}"></div>`);
         const exerciseList = Object.keys(app.workout.exerciseLookup);
@@ -236,16 +252,16 @@ class Activity {
 };
 
 const createStatElement = (label,value,optionsList=null) => {
+    /* Helper function to create a Stat HTML element */
     if (optionsList != null) {
         options = ``;
-        for (option of optionsList) {
+        for (option of optionsList) {   //Redo as reduce
             if (option == value) {
                 options = options.concat(`\n<option value="${option}" selected="selected">${option}</option>`)
             } else {
                 options = options.concat(`\n<option value="${option}">${option}</option>`)
             };
         };
-        //Redo as reduce
         return $(
             `<div class="stat">
                 <select id="exercise" name="exercise">
@@ -263,6 +279,7 @@ const createStatElement = (label,value,optionsList=null) => {
 };
 
 const generateExerciseHTML = (exerciseName,exerciseDescription,exerciseMuscles,exerciseEquipment) => {
+    /* Generate HTML for displaying Exercise Info */
     const exerciseDiv = $(".exercise-info");
     const descriptionHTML = $(`${exerciseDescription}`);
     const musclesHTML = exerciseMuscles.map((muscle) => {
@@ -285,10 +302,12 @@ const generateExerciseHTML = (exerciseName,exerciseDescription,exerciseMuscles,e
     return exerciseDiv;
 };
 
+/* Initiate the App */
 const app = new App();
 app.workout.fetchAllData();
 
 async function handleSubmit(e) {
+    /* Handle form submission for the new activity form */
     e.preventDefault();
     const $form = $('form');
     const inputs = $form.serializeArray();
@@ -300,6 +319,7 @@ async function handleSubmit(e) {
             badInput = true;
         }
     };
+    /* Flash activity form if given an invalid input */
     if (badInput) {
         $form.css('background-color','rgb(194, 45, 45)');
         setTimeout(function() {
@@ -315,6 +335,7 @@ async function handleSubmit(e) {
 }
 
 async function handleChange(e) {
+    /* Update the activity in the database API if a value changes */
     e.preventDefault();
     const activity_id = e.target.parentElement.parentElement.dataset.id;
     const json_request = {};

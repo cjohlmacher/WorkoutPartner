@@ -52,11 +52,22 @@ def session_logout():
         del session[USER_KEY]
 
 def redirect_if_logged_out(func):
+    """ If no user is logged in, redirect to home page"""
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not g.user:
             flash(unauthorized_access_message, "danger")
             return redirect("/")
+        return func(*args,**kwargs)
+    return wrapper
+
+def error_response_if_logged_out(func):
+    """ If no user is logged in, return error JSON response"""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not g.user:
+            response_json = {'response': unauthorized_access_message}
+            return (response_json,401)
         return func(*args,**kwargs)
     return wrapper
 
@@ -66,6 +77,7 @@ def show_home():
 
 @app.route('/signup', methods=['GET','POST'])
 def signup():
+    """ Show sign up form ('GET') or process sign up form ('POST') """
     signup_form = CreateUserForm()
     if signup_form.validate_on_submit():
         if signup_form.password.data != signup_form.confirm_password.data:
@@ -75,7 +87,7 @@ def signup():
         email = signup_form.email.data
         password = signup_form.password.data
         new_user = User.signup(username,email,password)
-        if not new_user:
+        if not new_user:  #If signup does not return a user, flash error message and redirect
             flash(f"Error creating account",'notify')
             return redirect('/signup')
         db.session.add(new_user)
@@ -106,6 +118,7 @@ def login():
 
 @app.route('/logout', methods=['GET'])
 def logout():
+    """Allow the user to log out; Clear the global user."""
     if g.user:
         session_logout()
         flash(successful_logout_message,'success')
@@ -116,6 +129,7 @@ def logout():
 @app.route('/users/<int:user_id>/workouts')
 @redirect_if_logged_out
 def view_workouts(user_id):
+    """Show a user's workouts.  If viewing user's own workouts, show all; otherwise, show only shared workouts"""
     user = User.query.get_or_404(user_id)
     if g.user.id == user.id:
         return render_template('Workout/workouts.html',workouts=user.workouts.order_by(Workout.datetime.desc()))
@@ -128,6 +142,7 @@ def view_workouts(user_id):
 
 @app.route('/workouts')
 def show_all_workouts():
+    """Show all shared workouts"""
     recent_workouts = (Workout.query
                     .order_by(Workout.datetime.desc())
                     .filter_by(is_private=False)
@@ -138,49 +153,26 @@ def show_all_workouts():
 @app.route('/workouts/new')
 @redirect_if_logged_out
 def new_workout():
+    """Create a new workout and redirect to edit page"""
     new_workout = Workout(creator=g.user.id)
     db.session.add(new_workout)
     db.session.commit()
-    print('Workout created: ',new_workout)
     return redirect(f'/workouts/{new_workout.id}/edit')
 
 @app.route('/workouts/<int:workout_id>')
 @redirect_if_logged_out
 def show_workout(workout_id):
+    """View a workout, or redirect if user does not have permission to view the workout"""
     workout = Workout.query.get_or_404(workout_id)
     if workout.creator != g.user.id and workout.is_private:
         flash(unauthorized_access_message,'danger')
         return redirect('/workouts')
     return render_template('Workout/workout.html',workout=workout)
 
-@app.route('/workouts/<int:workout_id>/share')
-@redirect_if_logged_out
-def share_workout(workout_id):
-    workout = Workout.query.get_or_404(workout_id)
-    shared_workout = Workout(creator=workout.creator, name=workout.name, is_private=False, is_logged=False)
-    db.session.add(shared_workout)
-    db.session.commit()
-    for activity in workout.workout_activities:
-        cloned_activity=Activity(performed_by=activity.performed_by,
-                            exercise_id=activity.exercise_id,
-                            weight=activity.weight,
-                            weight_units=activity.weight_units,
-                            reps=activity.reps,
-                            sets=activity.sets,
-                            duration=activity.duration,
-                            duration_units=activity.duration_units,
-                            distance=activity.distance,
-                            distance_units=activity.distance_units)
-        db.session.add(cloned_activity)
-        db.session.commit()
-        workout_relationship = Workout_Activity(workout_id=shared_workout.id,activity_id=cloned_activity.id)
-        db.session.add(workout_relationship)
-        db.session.commit()
-    return redirect(f"/workouts/{shared_workout.id}/edit")
-
 @app.route('/workouts/<int:workout_id>/clone')
 @redirect_if_logged_out
 def clone_workout(workout_id):
+    """Creates a clone of any user's workout, assigned to the logged in user"""
     workout = Workout.query.get_or_404(workout_id)
     cloned_workout = Workout(creator=g.user.id, name=workout.name, is_private=True, is_logged=True)
     db.session.add(cloned_workout)
@@ -206,6 +198,7 @@ def clone_workout(workout_id):
 @app.route('/workouts/<int:workout_id>/edit')
 @redirect_if_logged_out
 def edit_workout(workout_id):
+    """View to edit a workout"""
     workout = Workout.query.get_or_404(workout_id)
     if g.user.id == workout.creator:
         return render_template('Workout/workout.html',workout=workout)
@@ -216,11 +209,12 @@ def edit_workout(workout_id):
 @app.route('/workouts/<int:workout_id>/delete')
 @redirect_if_logged_out
 def delete_workout(workout_id):
+    """Allows a user to delete their workout."""
     workout = Workout.query.get_or_404(workout_id)
     if g.user.id == workout.creator:
         db.session.delete(workout)
         db.session.commit()
-        if request.referrer:
+        if request.referrer: #Redirect to the page the user made the delete request from, if it still exists
             if f'workouts/{workout_id}' in request.referrer:
                 return redirect(f'/users/{g.user.id}/workouts')
             else:
@@ -230,13 +224,13 @@ def delete_workout(workout_id):
         flash('You do not have permission to delete this workout', 'danger')
         return redirect(f"/workouts/{workout.id}")
 
+# API Routes for Workouts
 @app.route('/api/workouts/<int:workout_id>/edit', methods=['POST'])
+@error_response_if_logged_out
 def update_workout(workout_id):
+    """API for a user to edit their workout."""
     workout = Workout.query.get_or_404(workout_id)
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
-    elif g.user.id == workout.creator:
+    if g.user.id == workout.creator:
         new_workout_name = request.json['name']
         workout.name = new_workout_name
         db.session.add(workout)
@@ -249,12 +243,11 @@ def update_workout(workout_id):
         return (response_json,401)
 
 @app.route('/api/workouts/<int:workout_id>/share', methods=['GET'])
+@error_response_if_logged_out
 def toggle_share(workout_id):
+    """API for a user to toggle share status of workout."""
     workout = Workout.query.get_or_404(workout_id)
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
-    elif g.user.id == workout.creator:
+    if g.user.id == workout.creator:
         workout.is_private = not workout.is_private
         db.session.add(workout)
         db.session.commit()
@@ -266,12 +259,11 @@ def toggle_share(workout_id):
         return (response_json,401)
 
 @app.route('/api/workouts/<int:workout_id>/log', methods=['GET'])
+@error_response_if_logged_out
 def toggle_log(workout_id):
+    """API for a user to toggle logged status of workout."""
     workout = Workout.query.get_or_404(workout_id)
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
-    elif g.user.id == workout.creator:
+    if g.user.id == workout.creator:
         workout.is_logged = not workout.is_logged
         db.session.add(workout)
         db.session.commit()
@@ -282,13 +274,12 @@ def toggle_log(workout_id):
         response_json = {'response': unauthorized_edit_message}
         return (response_json,401)
 
-# API Routes for workout activities
+# API Routes for Activities
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['GET'])
+@error_response_if_logged_out
 def get_workout(workout_id):
+    """API for a user to get a workout's activities."""
     workout = Workout.query.get_or_404(workout_id)
-    if not g.user:
-        response_json = {'response': unauthorized_access_message}
-        return (response_json,401)
     all_activities = workout.workout_activities.order_by(Activity.datetime.desc())
     serialized_activities = [
         activity.serialize() for activity in all_activities]
@@ -298,12 +289,11 @@ def get_workout(workout_id):
     return jsonify(activities=serialized_activities)
 
 @app.route('/api/workouts/<int:workout_id>/activities', methods=['POST'])
+@error_response_if_logged_out
 def create_activity(workout_id):
+    """API for a user to add an activity to a workout."""
     workout = Workout.query.get_or_404(workout_id)
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
-    elif g.user.id == workout.creator:
+    if g.user.id == workout.creator:
         exercise_name = request.json['exercise']
         exercise = Exercise.query.filter_by(name=exercise_name).first()
         sets = request.json.get('sets',None) if request.json.get('sets',None) != "" else None
@@ -326,12 +316,11 @@ def create_activity(workout_id):
         return (response_json,401)
 
 @app.route('/api/activities/<int:activity_id>/update', methods=['POST'])
+@error_response_if_logged_out
 def update_activity(activity_id):
+    """API for a user to update an activity."""
     activity = Activity.query.get_or_404(activity_id)
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
-    elif g.user.id == activity.performed_by:    
+    if g.user.id == activity.performed_by:    
         for key,value in request.json.items():
             if value == "":
                 setattr(activity,key,None)
@@ -352,12 +341,11 @@ def update_activity(activity_id):
         return (response_json,401)
 
 @app.route('/api/activities/<int:activity_id>/delete')
+@error_response_if_logged_out
 def delete_activity(activity_id):
+    """API for a user to delete an activity."""
     activity = Activity.query.get_or_404(activity_id)
-    if not g.user:
-        response_json = {'response': unauthorized_edit_message}
-        return (response_json,401)
-    elif g.user.id == activity.performed_by: 
+    if g.user.id == activity.performed_by: 
         db.session.delete(activity)
         db.session.commit()
         response_json = {'response': "Resource successfully deleted"}
@@ -366,8 +354,10 @@ def delete_activity(activity_id):
         response_json = {'response': unauthorized_edit_message}
         return (response_json,401)
 
+# API Routes for Exercises
 @app.route('/api/exercises')
 def get_exercises():
+    """API to get all exercises in the database."""
     exercises = Exercise.query.all()
     serialized_exercises = [
         exercise.serialize() for exercise in exercises
@@ -376,6 +366,7 @@ def get_exercises():
 
 @app.route('/api/exercises/<exercise_name>')
 def get_exercise_info(exercise_name):
+    """API to retrieve a specific exercise."""
     exercise = Exercise.query.filter_by(name=exercise_name).first()
     serialized_exercise = exercise.serialize()
     return jsonify(exercise=serialized_exercise)

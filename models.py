@@ -120,6 +120,7 @@ class Workout(db.Model):
         return f"<Workout {self.id}: {self.name} by {self.creator} Private: {self.is_private} Logged: {self.is_logged}>"
     
     def display_date(self):
+        """Returns a MONTH-DAY-YEAR format of the datetime"""
         return f"{self.datetime.month}-{self.datetime.day}-{self.datetime.year}"
 
     def serialize(self):
@@ -128,6 +129,7 @@ class Workout(db.Model):
             }
     
     def get_unique_exercises(self):
+        """Returns the exercise names within the workout without any repeats"""
         unique_exercises = set()
         for activity in self.workout_activities:
             unique_exercises.add(activity.exercise.name)

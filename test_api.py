@@ -177,7 +177,7 @@ class ApiTestCase(TestCase):
                 follow_redirects=True)
 
             self.assertEqual(resp.status_code,401)
-            self.assertEqual(resp.json['response'],unauthorized_edit_message)
+            self.assertEqual(resp.json['response'],unauthorized_access_message)
             
             resp = c.get("/workouts",follow_redirects=True)
             html = resp.get_data(as_text=True)
@@ -262,14 +262,14 @@ class ApiTestCase(TestCase):
                 follow_redirects=True)
 
             self.assertEqual(resp.status_code,401)
-            self.assertEqual(resp.json['response'],unauthorized_edit_message)
+            self.assertEqual(resp.json['response'],unauthorized_access_message)
 
             workout3 = Workout.query.filter_by(name="Test Workout 3").first()
             resp = c.get(f"/api/workouts/{workout3.id}/share",
                 follow_redirects=True)
             
             self.assertEqual(resp.status_code,401)
-            self.assertEqual(resp.json['response'],unauthorized_edit_message)
+            self.assertEqual(resp.json['response'],unauthorized_access_message)
 
             testuser2 = User.query.filter_by(username="testuser2").first()
             with c.session_transaction() as sess:
@@ -480,7 +480,7 @@ class ApiTestCase(TestCase):
                     },follow_redirects=True)
             
             self.assertEqual(resp.status_code,401)
-            self.assertEqual(resp.json['response'],unauthorized_edit_message)
+            self.assertEqual(resp.json['response'],unauthorized_access_message)
 
             testuser2 = User.query.filter_by(username="testuser2").first()
             with c.session_transaction() as sess:
