@@ -79,9 +79,9 @@
     {% endif %}
     <div class="button-bar">
       {% if workout.creator == g.user.id %}
-        <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete this Workout</a>
+        <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete Workout</a>
       {% endif %}
-      <a class="button affirm" href="{{url_for('clone_workout',workout_id=workout.id)}}">Copy This Workout</a>
+      <a class="button affirm" href="{{url_for('clone_workout',workout_id=workout.id)}}">Copy Workout</a>
     </div>
   </div>
 {% endblock %}

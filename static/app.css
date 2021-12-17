@@ -140,6 +140,15 @@ button.log {
     cursor: pointer;
 }
 
+button.delete {
+    background-color: rgb(194, 45, 45);
+    font-size: 0.8em;
+    border: none;
+    border-radius: 1em;
+    box-sizing: none;
+    cursor: pointer;
+}
+
 button.get-info, button.toggle-stats {
     background-color: white;
     font-weight: bold;
@@ -149,6 +158,10 @@ button.get-info, button.toggle-stats {
     border-radius: 40px;
     border: solid 1px black;
     box-sizing: none;
+}
+
+.info > button {
+    margin: 5px;
 }
 
 a.button.danger {
@@ -193,6 +206,7 @@ a.button.danger {
 .activity {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
     margin: 5px 0px;
@@ -254,6 +268,7 @@ div.tags.row {
 .info {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
 }
 
@@ -264,6 +279,7 @@ div.tags.row {
 h2 > .seamless {
     font-size: 1.5em;
     border: none;
+    width: 100%;
     text-align: center;
     font-weight: bold;
 }
