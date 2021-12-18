@@ -8,16 +8,16 @@
             <div class="div-card">
                 <h3>{{workout.name}} by {{workout.created_by.username}}</h3>
                 {% if workout.creator == g.user.id %}
-                    <div class="tags row">
+                    <div class="tags row" data-id={{workout.id}}>
                         {% if workout.is_private == true %}
-                            <button class="tag share inactive static">Private</button>
+                            <button class="tag share inactive static" data-id={{workout.id}}>Private</button>
                         {% else %}
-                            <button class="tag share static">Shared</button>
+                            <button class="tag share static" data-id={{workout.id}}>Shared</button>
                         {% endif %}
                         {% if workout.is_logged == true %}
-                            <button class="tag logged static">Logged</button>
+                            <button class="tag logged static" data-id={{workout.id}}>Logged</button>
                         {% else %}
-                            <button class="tag logged inactive static">Untracked</button>
+                            <button class="tag logged inactive static" data-id={{workout.id}}>Untracked</button>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -33,4 +33,8 @@
             </div>
         {% endfor %}
     </div>
+    <p id="base-url" style="display: none" data-url='{{g.BASE_URL}}'></p>
+    <script src="https://unpkg.com/axios/dist/axios.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='tags.js') }}"></script>
 {% endblock %}

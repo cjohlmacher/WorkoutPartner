@@ -5,22 +5,22 @@
 {% block content %}
     <div class="display-case logs">
         <p id="base-url" style="display: none" data-url='{{g.BASE_URL}}'></p>
-        {% for workout in workouts %}
+        {% for workout in workouts|sort(attribute='datetime') %}
             <div class="div-card log-card">
                 <div class="log-section">
                     <p class="low-margin"><b>{{workout.name}}</b></p>
                     <p class="low-margin">{{workout.display_date()}}</p>
                     {% if workout.creator == g.user.id %}
-                        <div class="tags row">
+                        <div class="tags row" data-id={{workout.id}}>
                             {% if workout.is_private == true %}
-                                <button class="tag share inactive static">Private</button>
+                                <button class="tag share inactive static" data-id={{workout.id}}>Private</button>
                             {% else %}
-                                <button class="tag share static">Shared</button>
+                                <button class="tag share static" data-id={{workout.id}}>Shared</button>
                             {% endif %}
                             {% if workout.is_logged == true %}
-                                <button class="tag logged static">Logged</button>
+                                <button class="tag logged static" data-id={{workout.id}}>Logged</button>
                             {% else %}
-                                <button class="tag logged inactive static">Untracked</button>
+                                <button class="tag logged inactive static" data-id={{workout.id}}>Untracked</button>
                             {% endif %}
                         </div>
                     {% endif %}
