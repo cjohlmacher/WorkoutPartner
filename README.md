@@ -1,7 +1,18 @@
 # WorkoutSpotter
-Capstone project for Springboard
+Capstone project for Springboard hosted on https://workout-spotter.herokuapp.com
 
-## Project Proposal
+## Features
+User can create Workouts on the app, consisting of Activities (an exercise with stats on weight, sets, reps, duration, and/or distance).
+A Workout can be shared, logged, or both.  A shared workout is made available for all other users to view.  A logged workout is included in the user's workout log, where they can view summary stats from their workouts.
+
+## APIs
+Workout Spotter uses an exercise API at Wger.de 
+
+## Technology Stack
+Postgres database
+Flask web framework with SQLAlchemy, Jinja, BFlask, WTForms, JQuery
+
+## Original Project Proposal
 
 This application’s goal is to allow the user to plan their workouts and log key information as the user completes their workout, such as the weight amounts, number of sets/reps, and completion times.  
 
