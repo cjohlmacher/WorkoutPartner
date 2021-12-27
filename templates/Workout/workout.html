@@ -5,7 +5,7 @@
 {% block content %}
   <div class="div-card">
     {% if workout.creator == g.user.id %}
-      <h2 id="workout-identifier" data-workoutid={{workout.id}}>
+      <h2 id="workout-identifier" class="owner" data-workoutid={{workout.id}}>
         <input type="text" id="workout-name" value="{{workout.name}}" class="seamless" />
       </h2>
     {% else %}

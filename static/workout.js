@@ -30,8 +30,8 @@ class Workout {
         $('main').append($('<div class="exercise-info div-card"></div>'));
         $('.exercise-info').hide();
         for (let activity of this.activities) {
-            activity.filterStats()
-        }
+            activity.toggleStatDisplay();
+        };
         $('.activity.logged input.stat-value').each(function() {
             $(this).on('change',handleChange)
         });
@@ -74,7 +74,7 @@ class Workout {
         this.activities.push(activity);
         const activityHTML = activity.generateHTML();
         this.$workout.append(activityHTML);
-        activity.filterStats();
+        activity.toggleStatDisplay();
     }
     addTagEvents() {
         /* Add Tags */
@@ -181,20 +181,24 @@ class Activity {
         if (!this.distance) {
             $(`div[data-id='${this.id}'] input[name='distance']`).parent().hide();
         };
-        $(`div[data-id='${this.id}'] button.toggle-stats`).off('click',this.filterStats);
-        $(`div[data-id='${this.id}'] button.toggle-stats`).off('click',this.expandStats);
-        $(`div[data-id='${this.id}'] button.toggle-stats`).on('click',this.expandStats.bind(this));
     }
-    expandStats(e) {
+    expandStats() {
         /* Display all the stats for an activity, regardless of if they have a value */
-        e.preventDefault();
         $(`div[data-id='${this.id}'] input[name='sets']`).parent().show();
         $(`div[data-id='${this.id}'] input[name='reps']`).parent().show();
         $(`div[data-id='${this.id}'] input[name='weight']`).parent().show();
         $(`div[data-id='${this.id}'] input[name='duration']`).parent().show();
         $(`div[data-id='${this.id}'] input[name='distance']`).parent().show();
-        $(`div[data-id='${this.id}'] button.toggle-stats`).off('click',this.expandStats);
-        $(`div[data-id='${this.id}'] button.toggle-stats`).on('click',this.filterStats.bind(this));
+    }
+    toggleStatDisplay() {
+        const $activityStats = $(`div[data-id='${this.id}'] .toggle-stats`)
+        if ($activityStats.hasClass('ri-arrow-right-s-line')){
+            this.expandStats();    
+        } else {
+            this.filterStats();
+        }; 
+        $(`div[data-id='${this.id}'] .toggle-stats`).toggleClass('ri-arrow-right-s-line');
+        $(`div[data-id='${this.id}'] .toggle-stats`).toggleClass('ri-arrow-left-s-line');
     }
     async deleteActivity(e) {
         /* Delete an activity through the database API and remove from HTML */
@@ -207,7 +211,7 @@ class Activity {
     async requestInfo(e) {
         /* Request exercise info from the Wger API and display the information */
         e.preventDefault();
-        const activityId = e.target.parentElement.dataset.id;
+        const activityId = e.target.parentElement.parentElement.dataset.id;
         const exerciseName = $(`div[data-id=${activityId}] select option:selected`).val();
         const resp = await axios.get(`${app.base_url}/api/exercises/${exerciseName}`)
         const exerciseId = resp.data.exercise.id;
@@ -225,27 +229,31 @@ class Activity {
         const infoDiv = $(`<div class="info" data-id="${this.id}"></div>`);
         const exerciseList = Object.keys(app.workout.exerciseLookup);
         exerciseList.sort();
+        const $statDiv = $(`<div class="stats"></div>`);
         const exerciseText = createStatElement('Exercise',this.exercise,exerciseList);
         const setsText = createStatElement('Sets',this.sets);
         const repsText = createStatElement('Reps',this.reps);
         const weightText = createStatElement('Weight',this.weight);
         const durationText = createStatElement('Duration',this.duration);
         const distanceText = createStatElement('Distance',this.distance);
-        const expandButton = $("<button class='toggle-stats'>...</button>");
-        const infoButton = $("<button class='get-info'>i</button>");
-        const deleteButton = $("<button class='delete'>X</button>");
-        expandButton.on('click',this.expandStats.bind(this));
+        const expandButton = $('<i class="toggle-stats ri-arrow-left-s-line"></i>');
+        const infoButton = $('<i class="get-info ri-information-line"></i>');
+        const deleteButton = $('<i class="delete ri-delete-bin-line"></i>');
+        const $buttonDiv = $(`<div class="button-bar"></div>`);
+        expandButton.on('click',this.toggleStatDisplay.bind(this));
         infoButton.on('click',this.requestInfo);
         deleteButton.on('click',this.deleteActivity.bind(this));
         infoDiv.append(exerciseText);
-        infoDiv.append(setsText);
-        infoDiv.append(repsText);
-        infoDiv.append(weightText);
-        infoDiv.append(durationText);
-        infoDiv.append(distanceText);
-        infoDiv.append(expandButton);
-        infoDiv.append(infoButton);
-        infoDiv.append(deleteButton);
+        $statDiv.append(setsText);
+        $statDiv.append(repsText);
+        $statDiv.append(weightText);
+        $statDiv.append(durationText);
+        $statDiv.append(distanceText);
+        $statDiv.append(expandButton);
+        infoDiv.append($statDiv);
+        $buttonDiv.append(infoButton);
+        $buttonDiv.append(deleteButton);
+        infoDiv.append($buttonDiv);
         activityDiv.append(infoDiv);
         return activityDiv
     }

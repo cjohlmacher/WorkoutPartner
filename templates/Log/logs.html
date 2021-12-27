@@ -7,7 +7,7 @@
         <p id="base-url" style="display: none" data-url='{{g.BASE_URL}}'></p>
         {% for workout in workouts|sort(attribute='datetime') %}
             <div class="div-card log-card">
-                <div class="log-section">
+                <div class="summary-bar">
                     <p class="low-margin"><b>{{workout.name}}</b></p>
                     <p class="low-margin">{{workout.display_date()}}</p>
                     {% if workout.creator == g.user.id %}
@@ -28,11 +28,11 @@
                 <div class="log-section">
                     <ul class="horizontal">
                         {% for exercise_name in workout.get_unique_exercises() %}
-                            <li class="bulletless">{{exercise_name}}</li>
+                            <li class="bulletless exercise">{{exercise_name}}</li>
                         {% endfor %}
                     </ul>
                 </div>
-                <div class="log-section">
+                <div class="button-bar vertical">
                     <a class="button" href="{{url_for('show_workout', workout_id=workout.id)}}">View Workout</a>
                     {% if workout.creator == g.user.id %}
                         <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete Workout</a>

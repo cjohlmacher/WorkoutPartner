@@ -5,31 +5,36 @@
 {% block content %}
     <div class="display-case">
         {% for workout in workouts %}
-            <div class="div-card">
-                <h3>{{workout.name}} by {{workout.created_by.username}}</h3>
-                {% if workout.creator == g.user.id %}
-                    <div class="tags row" data-id={{workout.id}}>
-                        {% if workout.is_private == true %}
-                            <button class="tag share inactive static" data-id={{workout.id}}>Private</button>
-                        {% else %}
-                            <button class="tag share static" data-id={{workout.id}}>Shared</button>
-                        {% endif %}
-                        {% if workout.is_logged == true %}
-                            <button class="tag logged static" data-id={{workout.id}}>Logged</button>
-                        {% else %}
-                            <button class="tag logged inactive static" data-id={{workout.id}}>Untracked</button>
-                        {% endif %}
-                    </div>
-                {% endif %}
+            <div class="workout-card">
+                <div class="summary-bar">
+                    <p class="primary"><b>{{workout.name}}</b></p>
+                    <p class="secondary">{{workout.created_by.username}}</p>
+                    {% if workout.creator == g.user.id %}
+                        <div class="tags row" data-id={{workout.id}}>
+                            {% if workout.is_private == true %}
+                                <button class="tag minpad share inactive static" data-id={{workout.id}}>Private</button>
+                            {% else %}
+                                <button class="tag minpad share static" data-id={{workout.id}}>Shared</button>
+                            {% endif %}
+                            {% if workout.is_logged == true %}
+                                <button class="tag minpad logged static" data-id={{workout.id}}>Logged</button>
+                            {% else %}
+                                <button class="tag minpad logged inactive static" data-id={{workout.id}}>Untracked</button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
                 <ul>
                     {% for exercise_name in workout.get_unique_exercises() %}
-                        <li class="bulletless">{{exercise_name}}</li>
+                        <li class="exercise bulletless">{{exercise_name}}</li>
                     {% endfor %}
                 </ul>
-                <a class="button" href="{{url_for('show_workout', workout_id=workout.id)}}">View Workout</a>
-                {% if workout.creator == g.user.id %}
-                    <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete Workout</a>
-                {% endif %}
+                <div class="button-bar vertical">
+                    <a class="button" href="{{url_for('show_workout', workout_id=workout.id)}}">View</a>
+                    {% if workout.creator == g.user.id %}
+                        <a class="button danger" href="{{url_for('delete_workout',workout_id=workout.id)}}">Delete</a>
+                    {% endif %}
+                </div>
             </div>
         {% endfor %}
     </div>
@@ -37,4 +42,5 @@
     <script src="https://unpkg.com/axios/dist/axios.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='tags.js') }}"></script>
+    <script src="{{ url_for('static', filename='fontawesome_free/js/all.min.js') }}"></script>
 {% endblock %}
