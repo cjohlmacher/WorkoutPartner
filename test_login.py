@@ -165,6 +165,65 @@ class LoginViewTestCase(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn(successful_login_message,html)
     
+    def test_signup_caps_user(self):
+        """Can a new user sign up with a capitalized username? """
+        with self.client as c:
+            resp = c.post("/signup",data={
+                "username":"TESTUSER3",
+                "password":"testpassword3",
+                "confirm_password": "testpassword3",
+                "email": "testuser3@test.com",
+                }, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Welcome",html)
+
+            c.get("/logout",follow_redirects=True)
+
+            resp = c.post("/login", data={
+                "username":"TESTUSER3",
+                "password":"testpassword3"
+            },follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(successful_login_message,html)
+
+            c.get("/logout",follow_redirects=True)
+
+            resp = c.post("/login", data={
+                "username":"testuser3",
+                "password":"testpassword3"
+            },follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(successful_login_message,html)
+    
+    def test_signup_username_conflict(self):
+        """Is a new user prevented from creating an account with an existing username? """
+        with self.client as c:
+            resp = c.post("/signup",data={
+                "username":"testuser2",
+                "password":"testpassword3",
+                "confirm_password": "testpassword3",
+                "email": "testuser3@test.com",
+                }, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('Username already taken',html)
+
+            resp = c.post("/login", data={
+                "username":"testuser2",
+                "password":"testpassword3"
+            },follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(authentication_failure_message,html)
+
     def test_logout_user(self):
         """Can a user logout? """
         with self.client as c:

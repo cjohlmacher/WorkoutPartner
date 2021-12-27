@@ -204,7 +204,7 @@ class Activity {
         /* Delete an activity through the database API and remove from HTML */
         e.preventDefault();
         const resp = await axios.get(`${app.base_url}/api/activities/${this.id}/delete`);
-        $(`div[data-id='${this.id}']`).remove();
+        $(`div[data-id='${this.id}']`).parent().remove();
         const indexToRemove = app.workout.activities.indexOf(this);
         app.workout.activities.splice(indexToRemove,1);
     }

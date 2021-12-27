@@ -79,19 +79,21 @@ def show_home():
 def signup():
     """ Show sign up form ('GET') or process sign up form ('POST') """
     signup_form = CreateUserForm()
-    if signup_form.validate_on_submit():
+    if signup_form.validate_on_submit(): 
+        check_user = User.query.filter_by(username=signup_form.username.data.lower()).first()
+        if check_user:
+            flash(f"Username already taken")
+            return redirect('/signup')
         if signup_form.password.data != signup_form.confirm_password.data:
             flash(f"Passwords do not match",'notify')
             return redirect('/signup')
-        username = signup_form.username.data
+        username = signup_form.username.data.lower()
         email = signup_form.email.data
         password = signup_form.password.data
         new_user = User.signup(username,email,password)
         if not new_user:  #If signup does not return a user, flash error message and redirect
             flash(f"Error creating account",'notify')
             return redirect('/signup')
-        db.session.add(new_user)
-        db.session.commit()
         session_login(new_user)
         flash(f"Welcome to {g.APP_NAME}!",'success')
         return redirect('/')
@@ -105,7 +107,7 @@ def login():
         return redirect('/')
     auth_form = AuthenticateForm()
     if auth_form.validate_on_submit():
-        username = auth_form.username.data
+        username = auth_form.username.data.lower()
         password = auth_form.password.data
         user = User.authenticate(username,password)
         if user:

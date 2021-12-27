@@ -2,6 +2,7 @@ from datetime import datetime
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import exc
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -30,13 +31,18 @@ class User(db.Model):
 
         hashed_password = bcrypt.generate_password_hash(password).decode('UTF-8')
 
-        user = User(
-            username=username,
-            email=email,
-            password=hashed_password,
-        )
+        try: 
+            user = User(
+                username=username,
+                email=email,
+                password=hashed_password,
+            )
+            db.session.add(user)
+            db.session.commit()
+        except exc.IntegrityError:
+            user = None
+            db.session.rollback()
 
-        db.session.add(user)
         return user
     
     @classmethod
